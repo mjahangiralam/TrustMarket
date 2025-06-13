@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MessageCircle, Clock, Send, BookOpen, Lightbulb } from 'lucide-react';
 import { ChatMessage, AIAgent } from '../types/game';
 
@@ -23,6 +23,11 @@ export function DiscussionPhase({
   const [inputMessage, setInputMessage] = useState('');
   const [showConcepts, setShowConcepts] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
+
+  // Debug effect to log messages
+  useEffect(() => {
+    console.log('DiscussionPhase messages updated:', messages);
+  }, [messages]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,38 +136,38 @@ export function DiscussionPhase({
           )}
         </div>
 
-        {/* Chat Area */}
+        {/* Chat Area - FIXED */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 overflow-hidden">
           <div className="h-96 overflow-y-auto p-6 space-y-4">
-            {messages.map((message) => {
-              const agent = getAgentInfo(message.sender);
-              return (
-                <div
-                  key={message.id}
-                  className={`flex ${message.isAI ? 'justify-start' : 'justify-end'}`}
-                >
+            {messages.length > 0 ? (
+              messages.map((message) => {
+                const agent = getAgentInfo(message.sender);
+                return (
                   <div
-                    className={`max-w-sm rounded-2xl p-4 ${
-                      message.isAI
-                        ? 'bg-slate-700 text-white'
-                        : 'bg-blue-600 text-white'
-                    }`}
+                    key={message.id}
+                    className={`flex ${message.isAI ? 'justify-start' : 'justify-end'}`}
                   >
-                    <div className="flex items-center mb-2">
-                      {agent && (
-                        <span className="text-2xl mr-2">{agent.avatar}</span>
-                      )}
-                      <span className="font-semibold text-sm">
-                        {message.sender}
-                      </span>
-                      {/* Strategy is hidden during discussion */}
+                    <div
+                      className={`max-w-sm rounded-2xl p-4 ${
+                        message.isAI
+                          ? 'bg-slate-700 text-white'
+                          : 'bg-blue-600 text-white'
+                      }`}
+                    >
+                      <div className="flex items-center mb-2">
+                        {agent && (
+                          <span className="text-2xl mr-2">{agent.avatar}</span>
+                        )}
+                        <span className="font-semibold text-sm">
+                          {message.sender}
+                        </span>
+                      </div>
+                      <p className="text-sm leading-relaxed">{message.message}</p>
                     </div>
-                    <p className="text-sm leading-relaxed">{message.message}</p>
                   </div>
-                </div>
-              );
-            })}
-            {messages.length === 0 && (
+                );
+              })
+            ) : (
               <div className="text-center text-slate-400 py-12">
                 <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
                 <p>Discussion will begin shortly...</p>
@@ -232,7 +237,7 @@ export function DiscussionPhase({
         {/* Discussion Engagement Indicator */}
         <div className="mt-4 bg-green-600/20 border border-green-500/30 rounded-lg p-3">
           <p className="text-green-300 text-sm text-center">
-            💬 AI agents are actively participating - each agent sends messages every 10 seconds minimum
+            💬 AI agents are actively participating - each agent sends messages every 12 seconds minimum
           </p>
         </div>
       </div>

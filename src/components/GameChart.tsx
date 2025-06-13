@@ -186,10 +186,10 @@ export function GameChart({ rounds, showPerRound = false, onToggleMode }: GameCh
                   className="hover:r-8 transition-all cursor-pointer"
                 />
                 
-                {/* Round labels */}
+                {/* Round labels - FIXED Y POSITION */}
                 <text
                   x={point.x}
-                  y={chartHeight - 10}
+                  y={chartHeight - padding + 15}
                   fill="#9CA3AF"
                   fontSize="10"
                   textAnchor="middle"

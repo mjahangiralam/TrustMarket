@@ -22,7 +22,7 @@ export function DecisionPhase({ currentRound, aiAgents, onMakeDecision }: Decisi
           <p className="text-xl text-slate-300">Make your strategic decision</p>
         </div>
 
-        {/* AI Agents Status */}
+        {/* AI Agents Status - STRATEGIES HIDDEN */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
           {aiAgents.map((agent) => (
             <div key={agent.id} className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20">
@@ -42,7 +42,7 @@ export function DecisionPhase({ currentRound, aiAgents, onMakeDecision }: Decisi
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-slate-400">Strategy:</span>
-                    <span className="text-white text-xs">{agent.strategy}</span>
+                    <span className="text-slate-500 text-xs">Hidden</span>
                   </div>
                 </div>
               </div>

@@ -132,20 +132,19 @@ export function useGameLogic() {
     return messagePool[Math.floor(Math.random() * messagePool.length)];
   }, []);
 
-  // Schedule AI messages with minimum frequency
+  // Schedule AI messages with minimum frequency - FIXED
   const scheduleAIMessages = useCallback(() => {
+    // Clear existing timers first
+    Object.values(messageTimers).forEach(timer => clearInterval(timer));
+    setMessageTimers({});
+
     gameState.aiAgents.forEach((agent, index) => {
-      const baseDelay = (index + 1) * 2000; // Stagger initial messages
-      const messageInterval = 10000; // 10 seconds minimum between messages
-      
-      // Clear existing timer
-      if (messageTimers[agent.id]) {
-        clearInterval(messageTimers[agent.id]);
-      }
+      const baseDelay = (index + 1) * 3000; // Stagger initial messages
+      const messageInterval = 12000; // 12 seconds between messages
       
       // Schedule first message
-      setTimeout(() => {
-        if (gameState.phase === 'discussion' && gameState.timeRemaining > 0) {
+      const firstMessageTimer = setTimeout(() => {
+        if (gameState.phase === 'discussion' && gameState.timeRemaining > 5) {
           const message: ChatMessage = {
             id: `ai-${agent.id}-${Date.now()}`,
             sender: agent.name,
@@ -154,7 +153,11 @@ export function useGameLogic() {
             isAI: true,
             agentId: agent.id
           };
-          setCurrentMessages(prev => [...prev, message]);
+          
+          setCurrentMessages(prev => {
+            console.log(`Adding AI message from ${agent.name}:`, message.message);
+            return [...prev, message];
+          });
           
           // Update agent message tracking
           setGameState(prev => ({
@@ -169,9 +172,9 @@ export function useGameLogic() {
       }, baseDelay);
       
       // Schedule recurring messages
-      const timer = setInterval(() => {
+      const recurringTimer = setInterval(() => {
         if (gameState.phase === 'discussion' && gameState.timeRemaining > 10) {
-          const shouldSendMessage = Math.random() < 0.7; // 70% chance to send message
+          const shouldSendMessage = Math.random() < 0.8; // 80% chance to send message
           if (shouldSendMessage) {
             const isDefensive = agent.trustLevel < 50 || Math.random() < 0.3;
             const message: ChatMessage = {
@@ -182,7 +185,11 @@ export function useGameLogic() {
               isAI: true,
               agentId: agent.id
             };
-            setCurrentMessages(prev => [...prev, message]);
+            
+            setCurrentMessages(prev => {
+              console.log(`Adding recurring AI message from ${agent.name}:`, message.message);
+              return [...prev, message];
+            });
             
             setGameState(prev => ({
               ...prev,
@@ -196,9 +203,13 @@ export function useGameLogic() {
         }
       }, messageInterval);
       
-      setMessageTimers(prev => ({ ...prev, [agent.id]: timer }));
+      setMessageTimers(prev => ({ 
+        ...prev, 
+        [`${agent.id}_first`]: firstMessageTimer,
+        [`${agent.id}_recurring`]: recurringTimer
+      }));
     });
-  }, [gameState.aiAgents, gameState.phase, gameState.timeRemaining, gameState.discussionTopic, gameState.currentRound, generateAIMessage, messageTimers]);
+  }, [gameState.aiAgents, gameState.phase, gameState.timeRemaining, gameState.discussionTopic, gameState.currentRound, generateAIMessage]);
 
   // Calculate payoffs for pairwise interactions
   const calculatePayoff = useCallback((humanChoice: 'cooperate' | 'defect', aiChoice: 'cooperate' | 'defect') => {
@@ -206,22 +217,23 @@ export function useGameLogic() {
     return PAYOFF_MATRIX[key];
   }, []);
 
-  // Start discussion phase with proper duration
+  // Start discussion phase with proper duration - FIXED
   const startDiscussion = useCallback((discussionDuration: number = 60) => {
     const topic = DISCUSSION_TOPICS[Math.floor(Math.random() * DISCUSSION_TOPICS.length)];
+    
+    // Clear existing messages and timers
+    setCurrentMessages([]);
+    Object.values(messageTimers).forEach(timer => clearInterval(timer));
+    setMessageTimers({});
+    
     setGameState(prev => ({
       ...prev,
       phase: 'discussion',
       discussionTopic: topic,
       timeRemaining: discussionDuration
     }));
-    setCurrentMessages([]);
     
-    // Clear existing timers
-    Object.values(messageTimers).forEach(timer => clearInterval(timer));
-    setMessageTimers({});
-    
-    // Schedule AI messages
+    // Schedule AI messages after a short delay to ensure state is updated
     setTimeout(() => {
       scheduleAIMessages();
     }, 1000);
@@ -315,7 +327,7 @@ export function useGameLogic() {
     }));
   }, [gameState, currentMessages, getAIDecision, calculatePayoff, messageTimers]);
 
-  // Add human message
+  // Add human message - FIXED
   const addMessage = useCallback((message: string) => {
     const newMessage: ChatMessage = {
       id: `human-${Date.now()}`,
@@ -324,7 +336,13 @@ export function useGameLogic() {
       timestamp: Date.now(),
       isAI: false
     };
-    setCurrentMessages(prev => [...prev, newMessage]);
+    
+    console.log('Adding human message:', message);
+    setCurrentMessages(prev => {
+      const updated = [...prev, newMessage];
+      console.log('Updated messages:', updated);
+      return updated;
+    });
   }, []);
 
   // Timer effect for discussion phase

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Award, Brain, Users, TrendingUp, Eye, Target, Table, Lightbulb } from 'lucide-react';
+import { Award, Brain, Users, TrendingUp, Eye, Target, Table, Lightbulb, Trophy, Crown } from 'lucide-react';
 import { GameState, StrategyReveal } from '../types/game';
 import { GameChart } from './GameChart';
 import { STRATEGY_BEHAVIORAL_PATTERNS } from '../data/gameData';
@@ -10,20 +10,68 @@ interface GameDebriefProps {
   onToggleGraphMode: () => void;
 }
 
+interface PlayerRanking {
+  name: string;
+  avatar: string;
+  avgPayoff: number;
+  isHuman: boolean;
+  totalPayoff: number;
+}
+
 export function GameDebrief({ gameState, onPlayAgain, onToggleGraphMode }: GameDebriefProps) {
   const totalScore = gameState.rounds.reduce((sum, round) => sum + round.humanPayoff, 0);
   const cooperationRate = (gameState.rounds.filter(r => r.humanChoice === 'cooperate').length / gameState.rounds.length) * 100;
   const avgRoundScore = totalScore / gameState.rounds.length;
 
+  // UPDATED GRADING SYSTEM - A, B, C, F based on percentage
   const getPerformanceGrade = () => {
-    if (avgRoundScore >= 4) return { grade: 'S', color: 'text-purple-400', desc: 'Strategic Mastery' };
-    if (avgRoundScore >= 3) return { grade: 'A', color: 'text-green-400', desc: 'Excellent Strategy' };
-    if (avgRoundScore >= 2) return { grade: 'B', color: 'text-blue-400', desc: 'Good Performance' };
-    if (avgRoundScore >= 1.5) return { grade: 'C', color: 'text-yellow-400', desc: 'Average Performance' };
-    return { grade: 'D', color: 'text-red-400', desc: 'Needs Improvement' };
+    const maxPossibleAvgScore = 5; // Maximum possible average score per round
+    const percentage = (avgRoundScore / maxPossibleAvgScore) * 100;
+    
+    if (percentage >= 80) return { grade: 'A', color: 'text-green-400', desc: 'Excellent Performance', percentage };
+    if (percentage >= 70) return { grade: 'B', color: 'text-blue-400', desc: 'Good Performance', percentage };
+    if (percentage >= 60) return { grade: 'C', color: 'text-yellow-400', desc: 'Average Performance', percentage };
+    return { grade: 'F', color: 'text-red-400', desc: 'Needs Improvement', percentage };
   };
 
   const performance = getPerformanceGrade();
+
+  // CALCULATE INDIVIDUAL PLAYER RANKINGS
+  const calculatePlayerRankings = (): PlayerRanking[] => {
+    const players: PlayerRanking[] = [];
+    
+    // Add human player
+    players.push({
+      name: 'You (Human)',
+      avatar: '👤',
+      avgPayoff: avgRoundScore,
+      isHuman: true,
+      totalPayoff: totalScore
+    });
+    
+    // Add AI agents
+    gameState.aiAgents.forEach(agent => {
+      const totalAIPayoff = gameState.rounds.reduce((sum, round) => {
+        return sum + (round.payoffs[agent.id] || 0);
+      }, 0);
+      const avgAIPayoff = totalAIPayoff / gameState.rounds.length;
+      
+      players.push({
+        name: agent.name,
+        avatar: agent.avatar,
+        avgPayoff: avgAIPayoff,
+        isHuman: false,
+        totalPayoff: totalAIPayoff
+      });
+    });
+    
+    // Sort by average payoff (descending)
+    return players.sort((a, b) => b.avgPayoff - a.avgPayoff);
+  };
+
+  const playerRankings = calculatePlayerRankings();
+  const winner = playerRankings[0];
+  const humanRank = playerRankings.findIndex(p => p.isHuman) + 1;
 
   // Generate strategy reveals with behavioral justifications
   const generateStrategyReveals = (): StrategyReveal[] => {
@@ -170,6 +218,70 @@ export function GameDebrief({ gameState, onPlayAgain, onToggleGraphMode }: GameD
           )}
         </div>
 
+        {/* WINNER ANNOUNCEMENT */}
+        <div className="bg-gradient-to-r from-yellow-600/20 to-orange-600/20 border border-yellow-500/30 rounded-2xl p-8 mb-8 text-center">
+          <div className="flex items-center justify-center mb-4">
+            <Crown className="w-12 h-12 text-yellow-400 mr-4" />
+            <h2 className="text-3xl font-bold text-white">Game Winner</h2>
+            <Crown className="w-12 h-12 text-yellow-400 ml-4" />
+          </div>
+          <div className="flex items-center justify-center mb-4">
+            <span className="text-6xl mr-4">{winner.avatar}</span>
+            <div>
+              <p className="text-2xl font-bold text-yellow-400">{winner.name}</p>
+              <p className="text-lg text-slate-300">Average: {winner.avgPayoff.toFixed(2)} points/round</p>
+              <p className="text-lg text-slate-300">Total: {winner.totalPayoff} points</p>
+            </div>
+          </div>
+          {winner.isHuman ? (
+            <p className="text-green-400 text-lg font-semibold">🎉 Congratulations! You outperformed all AI agents!</p>
+          ) : (
+            <p className="text-blue-400 text-lg font-semibold">🤖 AI Victory! You ranked #{humanRank} out of {playerRankings.length} players.</p>
+          )}
+        </div>
+
+        {/* PLAYER RANKINGS */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 mb-8">
+          <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
+            <Trophy className="w-6 h-6 mr-3" />
+            Final Player Rankings
+          </h3>
+          <div className="space-y-4">
+            {playerRankings.map((player, index) => (
+              <div key={player.name} className={`flex items-center justify-between p-4 rounded-lg ${
+                index === 0 ? 'bg-yellow-600/20 border border-yellow-500/30' :
+                player.isHuman ? 'bg-blue-600/20 border border-blue-500/30' :
+                'bg-slate-800/50'
+              }`}>
+                <div className="flex items-center">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mr-4 ${
+                    index === 0 ? 'bg-yellow-500 text-black' :
+                    index === 1 ? 'bg-gray-400 text-black' :
+                    index === 2 ? 'bg-orange-600 text-white' :
+                    'bg-slate-600 text-white'
+                  }`}>
+                    {index + 1}
+                  </div>
+                  <span className="text-3xl mr-4">{player.avatar}</span>
+                  <div>
+                    <p className={`font-bold ${player.isHuman ? 'text-blue-400' : 'text-white'}`}>
+                      {player.name}
+                    </p>
+                    <p className="text-sm text-slate-400">
+                      {player.isHuman ? 'Human Player' : 'AI Agent'}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-xl font-bold text-white">{player.avgPayoff.toFixed(2)}</p>
+                  <p className="text-sm text-slate-400">avg/round</p>
+                  <p className="text-sm text-slate-500">({player.totalPayoff} total)</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Performance Grade */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 mb-8 text-center">
           <h2 className="text-2xl font-bold text-white mb-6">Your Strategic Grade</h2>
@@ -179,6 +291,7 @@ export function GameDebrief({ gameState, onPlayAgain, onToggleGraphMode }: GameD
             </div>
             <div className="text-left">
               <p className="text-2xl font-bold text-white mb-2">{performance.desc}</p>
+              <p className="text-lg text-slate-300">Score: {performance.percentage.toFixed(1)}%</p>
               <p className="text-lg text-slate-300">Average: {avgRoundScore.toFixed(1)} points/round</p>
               <p className="text-lg text-slate-300">Cooperation: {cooperationRate.toFixed(1)}%</p>
             </div>
