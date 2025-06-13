@@ -3,6 +3,7 @@ export interface GameConfig {
   discussionTime: number;
   aiAgentCount: number;
   elevenLabsKey?: string;
+  aiPersonalityKey?: string;
   educationalMode: boolean;
   gameMode: 'finite' | 'stochastic';
 }

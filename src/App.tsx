@@ -5,7 +5,8 @@ import { DecisionPhase } from './components/DecisionPhase';
 import { ResultsPhase } from './components/ResultsPhase';
 import { GameDebrief } from './components/GameDebrief';
 import { useGameLogic } from './hooks/useGameLogic';
-import { GameConfig } from './types/game';
+import { GameConfig, GameState } from './types/game';
+import { DISCUSSION_TOPICS } from './data/gameData';
 
 function App() {
   const {
@@ -17,24 +18,38 @@ function App() {
     addMessage,
     nextRound,
     toggleGraphMode,
-    setGameState
+    setGameState,
+    scheduleAIMessages
   } = useGameLogic();
 
   const handleStartGame = (config: GameConfig) => {
+    console.log('Starting game with config:', config);
     const aiAgents = createAIAgents(config.aiAgentCount);
+    console.log('Created AI agents:', aiAgents);
     
-    setGameState(prev => ({
-      ...prev,
-      phase: 'discussion',
-      aiAgents,
-      gameConfig: config,
-      currentRound: 1,
-      rounds: [],
-      isGameEnded: false,
-      conceptsEncountered: []
-    }));
-    
-    startDiscussion(config.discussionTime);
+    // Set the game state and start discussion in a single state update
+    setGameState(prev => {
+      const newState: GameState = {
+        ...prev,
+        phase: 'discussion',
+        aiAgents,
+        gameConfig: config,
+        currentRound: 1,
+        rounds: [],
+        isGameEnded: false,
+        conceptsEncountered: [],
+        discussionTopic: DISCUSSION_TOPICS[Math.floor(Math.random() * DISCUSSION_TOPICS.length)],
+        timeRemaining: config.discussionTime
+      };
+      
+      // Schedule AI messages after state is updated
+      requestAnimationFrame(() => {
+        console.log('Starting discussion with state:', newState);
+        scheduleAIMessages(newState);
+      });
+      
+      return newState;
+    });
   };
 
   const handlePlayAgain = () => {
