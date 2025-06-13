@@ -6,48 +6,54 @@ import { ResultsPhase } from './components/ResultsPhase';
 import { GameDebrief } from './components/GameDebrief';
 import { useGameLogic } from './hooks/useGameLogic';
 import { GameConfig } from './types/game';
-import { AI_AGENTS } from './data/gameData';
 
 function App() {
   const {
     gameState,
     currentMessages,
+    createAIAgents,
     startDiscussion,
     makeDecision,
     addMessage,
     nextRound,
+    toggleGraphMode,
     setGameState
   } = useGameLogic();
 
   const handleStartGame = (config: GameConfig) => {
+    const aiAgents = createAIAgents(config.aiAgentCount);
+    
     setGameState(prev => ({
       ...prev,
       phase: 'discussion',
-      aiAgents: AI_AGENTS.slice(0, config.aiAgentCount).map(agent => ({ 
-        ...agent, 
-        trustLevel: 70,
-        hasDefectedBefore: false 
-      })),
-      gameConfig: config
+      aiAgents,
+      gameConfig: config,
+      currentRound: 1,
+      rounds: [],
+      isGameEnded: false,
+      conceptsEncountered: []
     }));
+    
     startDiscussion(config.discussionTime);
   };
 
   const handlePlayAgain = () => {
     const config = gameState.gameConfig;
+    if (!config) return;
+    
+    const aiAgents = createAIAgents(config.aiAgentCount);
+    
     setGameState({
       phase: 'setup',
       currentRound: 1,
       rounds: [],
-      aiAgents: AI_AGENTS.slice(0, config?.aiAgentCount || 3).map(agent => ({ 
-        ...agent, 
-        trustLevel: 70,
-        hasDefectedBefore: false 
-      })),
+      aiAgents,
       discussionTopic: '',
-      timeRemaining: config?.discussionTime || 60,
+      timeRemaining: config.discussionTime,
       isGameEnded: false,
-      gameConfig: config
+      gameConfig: config,
+      showPerRoundPayoff: false,
+      conceptsEncountered: []
     });
   };
 
@@ -93,6 +99,7 @@ function App() {
         <GameDebrief
           gameState={gameState}
           onPlayAgain={handlePlayAgain}
+          onToggleGraphMode={toggleGraphMode}
         />
       );
     

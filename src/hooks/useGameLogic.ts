@@ -1,109 +1,204 @@
 import { useState, useCallback, useEffect } from 'react';
 import { GameState, GameRound, AIAgent, ChatMessage, GameConfig } from '../types/game';
-import { AI_AGENTS, DISCUSSION_TOPICS, PAYOFF_MATRIX } from '../data/gameData';
+import { 
+  AI_AGENT_TEMPLATES, 
+  DISCUSSION_TOPICS, 
+  PAYOFF_MATRIX, 
+  GAME_THEORY_STRATEGIES,
+  STRATEGY_BEHAVIORAL_PATTERNS,
+  EDUCATIONAL_INSIGHTS,
+  REFLECTION_PROMPTS
+} from '../data/gameData';
 
 export function useGameLogic() {
   const [gameState, setGameState] = useState<GameState>({
     phase: 'setup',
     currentRound: 1,
     rounds: [],
-    aiAgents: AI_AGENTS.slice(0, 3),
+    aiAgents: [],
     discussionTopic: DISCUSSION_TOPICS[0],
     timeRemaining: 60,
-    isGameEnded: false
+    isGameEnded: false,
+    showPerRoundPayoff: false,
+    conceptsEncountered: []
   });
 
   const [currentMessages, setCurrentMessages] = useState<ChatMessage[]>([]);
+  const [messageTimers, setMessageTimers] = useState<Record<string, NodeJS.Timeout>>({});
+
+  // Create AI agents with random strategy assignment
+  const createAIAgents = useCallback((count: number): AIAgent[] => {
+    const agents: AIAgent[] = [];
+    const availableStrategies = [...GAME_THEORY_STRATEGIES];
+    
+    for (let i = 0; i < count; i++) {
+      const template = AI_AGENT_TEMPLATES[i % AI_AGENT_TEMPLATES.length];
+      
+      // Randomly assign strategy (without replacement for variety)
+      const strategyIndex = Math.floor(Math.random() * availableStrategies.length);
+      const strategy = availableStrategies.splice(strategyIndex, 1)[0];
+      
+      agents.push({
+        ...template,
+        id: `agent_${i + 1}`,
+        strategy,
+        trustLevel: 70,
+        hasDefectedBefore: false,
+        lastMessageTime: 0,
+        messageCount: 0
+      });
+    }
+    
+    return agents;
+  }, []);
 
   // Enhanced AI decision making with proper strategy implementation
   const getAIDecision = useCallback((agent: AIAgent, round: number, humanHistory: ('cooperate' | 'defect')[], allRounds: GameRound[]): 'cooperate' | 'defect' => {
     const lastHumanMove = humanHistory[humanHistory.length - 1];
+    const gameConfig = gameState.gameConfig;
+    const isFiniteGame = gameConfig?.gameMode === 'finite';
+    const maxRounds = gameConfig?.maxRounds || 10;
+    const isNearEnd = isFiniteGame && round >= maxRounds - 2;
     
     switch (agent.strategy) {
       case 'Tit-for-Tat':
-        // Cooperate on first round, then mirror human's last move
         return round === 1 ? 'cooperate' : lastHumanMove;
       
       case 'Grim Trigger':
-        // Cooperate until first human defection, then defect permanently
         return humanHistory.includes('defect') ? 'defect' : 'cooperate';
       
-      case 'Opportunistic':
-        // Consider trust level and potential payoff
-        const trustThreshold = 50;
-        const defectionProbability = agent.trustLevel < trustThreshold ? 0.7 : 0.3;
-        
-        // More likely to defect if trust is low or if human defected recently
-        if (lastHumanMove === 'defect' && Math.random() < 0.8) return 'defect';
-        if (agent.trustLevel < 30 && Math.random() < defectionProbability) return 'defect';
-        
-        return Math.random() < defectionProbability ? 'defect' : 'cooperate';
-      
-      case 'Nash Equilibrium Seeker':
-        // Analyze patterns and seek optimal mutual strategy
+      case 'Nash Equilibrium Mimic':
+        // Seek stable mutual strategies
         const cooperateRate = humanHistory.filter(move => move === 'cooperate').length / humanHistory.length;
-        
-        // If human cooperates frequently, cooperate back
-        if (cooperateRate > 0.6) return 'cooperate';
-        
-        // If human defects frequently, try to establish equilibrium
-        if (cooperateRate < 0.3) return Math.random() < 0.5 ? 'defect' : 'cooperate';
-        
-        // Mixed strategy for uncertain patterns
+        if (cooperateRate > 0.7) return 'cooperate';
+        if (cooperateRate < 0.3) return 'defect';
         return Math.random() < 0.6 ? 'cooperate' : 'defect';
       
-      case 'Adaptive Mirroring':
-        // Learn from patterns and adapt
-        if (round <= 2) return 'cooperate';
+      case 'Subgame Perfect Equilibrium':
+        // Consider endgame implications
+        if (isNearEnd) {
+          // In final rounds, defection becomes more attractive
+          return Math.random() < 0.7 ? 'defect' : 'cooperate';
+        }
+        // Early game: build reputation
+        if (round <= 3) return 'cooperate';
+        // Mid game: respond to patterns
+        return lastHumanMove === 'cooperate' ? 'cooperate' : 'defect';
+      
+      case 'Stochastic Strategy':
+        // Probability-based decisions with some pattern awareness
+        const baseCoopProb = 0.6;
+        const trustAdjustment = (agent.trustLevel - 50) / 100;
+        const finalProb = Math.max(0.1, Math.min(0.9, baseCoopProb + trustAdjustment));
+        return Math.random() < finalProb ? 'cooperate' : 'defect';
+      
+      case 'Trust & Reputation-Based':
+        // Decisions based on trust level and reputation
+        const trustThreshold = 60;
+        if (agent.trustLevel > trustThreshold) {
+          return Math.random() < 0.8 ? 'cooperate' : 'defect';
+        } else {
+          return Math.random() < 0.3 ? 'cooperate' : 'defect';
+        }
+      
+      case 'Evolutionary Strategy':
+        // Adapt based on performance
+        if (allRounds.length === 0) return 'cooperate';
         
-        const recentMoves = humanHistory.slice(-3);
-        const recentCooperateRate = recentMoves.filter(move => move === 'cooperate').length / recentMoves.length;
+        const recentRounds = allRounds.slice(-3);
+        const avgPayoff = recentRounds.reduce((sum, r) => sum + (r.payoffs[agent.id] || 0), 0) / recentRounds.length;
         
-        return recentCooperateRate > 0.5 ? 'cooperate' : 'defect';
+        // If performing well, continue current approach
+        if (avgPayoff > 2.5) {
+          const recentChoices = recentRounds.map(r => r.aiChoices[agent.id]);
+          const recentCoopRate = recentChoices.filter(c => c === 'cooperate').length / recentChoices.length;
+          return Math.random() < recentCoopRate ? 'cooperate' : 'defect';
+        } else {
+          // If performing poorly, try opposite approach
+          return lastHumanMove === 'cooperate' ? 'defect' : 'cooperate';
+        }
       
       default:
         return 'cooperate';
     }
+  }, [gameState.gameConfig]);
+
+  // Generate AI chat message based on strategy and context
+  const generateAIMessage = useCallback((agent: AIAgent, topic: string, round: number, isDefensive: boolean = false): string => {
+    const patterns = STRATEGY_BEHAVIORAL_PATTERNS[agent.strategy as keyof typeof STRATEGY_BEHAVIORAL_PATTERNS];
+    if (!patterns) return "I'm thinking about the best approach here.";
+    
+    const messagePool = isDefensive ? patterns.defensiveMessages : patterns.cooperativeMessages;
+    return messagePool[Math.floor(Math.random() * messagePool.length)];
   }, []);
 
-  // Generate AI chat message based on personality and context
-  const generateAIMessage = useCallback((agent: AIAgent, topic: string, round: number): string => {
-    const responses = {
-      'loyalist': [
-        "I believe cooperation builds stronger foundations for everyone involved.",
-        "Trust is earned through consistency, not just words.",
-        "Short-term gains often lead to long-term losses in relationships.",
-        "We should focus on mutual benefit rather than individual advantage."
-      ],
-      'cynic': [
-        "History shows that self-interest usually trumps cooperation.",
-        "Trust is a luxury we can't afford in competitive environments.",
-        "Those who cooperate first are often the first to be exploited.",
-        "I've learned to expect betrayal - it's safer that way."
-      ],
-      'opportunist': [
-        "The key is adapting your strategy based on what others do.",
-        "Sometimes you need to take risks to maximize your position.",
-        "Every situation is unique - rigid strategies often fail.",
-        "I'm watching everyone's moves carefully before deciding."
-      ],
-      'strategist': [
-        "The optimal strategy depends on the game's structure and opponents.",
-        "Pattern recognition is crucial for long-term success.",
-        "Equilibrium strategies provide stability but may not maximize payoff.",
-        "I'm analyzing the meta-game here - very interesting dynamics."
-      ],
-      'mirror': [
-        "I learn from observing how others behave in these situations.",
-        "Adaptation is key - what worked before might not work now.",
-        "I'm studying the patterns emerging in our interactions.",
-        "Flexibility in strategy often beats rigid approaches."
-      ]
-    };
-    
-    const agentResponses = responses[agent.id as keyof typeof responses] || responses['loyalist'];
-    return agentResponses[Math.floor(Math.random() * agentResponses.length)];
-  }, []);
+  // Schedule AI messages with minimum frequency
+  const scheduleAIMessages = useCallback(() => {
+    gameState.aiAgents.forEach((agent, index) => {
+      const baseDelay = (index + 1) * 2000; // Stagger initial messages
+      const messageInterval = 10000; // 10 seconds minimum between messages
+      
+      // Clear existing timer
+      if (messageTimers[agent.id]) {
+        clearInterval(messageTimers[agent.id]);
+      }
+      
+      // Schedule first message
+      setTimeout(() => {
+        if (gameState.phase === 'discussion' && gameState.timeRemaining > 0) {
+          const message: ChatMessage = {
+            id: `ai-${agent.id}-${Date.now()}`,
+            sender: agent.name,
+            message: generateAIMessage(agent, gameState.discussionTopic, gameState.currentRound),
+            timestamp: Date.now(),
+            isAI: true,
+            agentId: agent.id
+          };
+          setCurrentMessages(prev => [...prev, message]);
+          
+          // Update agent message tracking
+          setGameState(prev => ({
+            ...prev,
+            aiAgents: prev.aiAgents.map(a => 
+              a.id === agent.id 
+                ? { ...a, lastMessageTime: Date.now(), messageCount: (a.messageCount || 0) + 1 }
+                : a
+            )
+          }));
+        }
+      }, baseDelay);
+      
+      // Schedule recurring messages
+      const timer = setInterval(() => {
+        if (gameState.phase === 'discussion' && gameState.timeRemaining > 10) {
+          const shouldSendMessage = Math.random() < 0.7; // 70% chance to send message
+          if (shouldSendMessage) {
+            const isDefensive = agent.trustLevel < 50 || Math.random() < 0.3;
+            const message: ChatMessage = {
+              id: `ai-${agent.id}-${Date.now()}`,
+              sender: agent.name,
+              message: generateAIMessage(agent, gameState.discussionTopic, gameState.currentRound, isDefensive),
+              timestamp: Date.now(),
+              isAI: true,
+              agentId: agent.id
+            };
+            setCurrentMessages(prev => [...prev, message]);
+            
+            setGameState(prev => ({
+              ...prev,
+              aiAgents: prev.aiAgents.map(a => 
+                a.id === agent.id 
+                  ? { ...a, lastMessageTime: Date.now(), messageCount: (a.messageCount || 0) + 1 }
+                  : a
+              )
+            }));
+          }
+        }
+      }, messageInterval);
+      
+      setMessageTimers(prev => ({ ...prev, [agent.id]: timer }));
+    });
+  }, [gameState.aiAgents, gameState.phase, gameState.timeRemaining, gameState.discussionTopic, gameState.currentRound, generateAIMessage, messageTimers]);
 
   // Calculate payoffs for pairwise interactions
   const calculatePayoff = useCallback((humanChoice: 'cooperate' | 'defect', aiChoice: 'cooperate' | 'defect') => {
@@ -122,24 +217,17 @@ export function useGameLogic() {
     }));
     setCurrentMessages([]);
     
-    // Add AI messages with staggered timing
+    // Clear existing timers
+    Object.values(messageTimers).forEach(timer => clearInterval(timer));
+    setMessageTimers({});
+    
+    // Schedule AI messages
     setTimeout(() => {
-      gameState.aiAgents.forEach((agent, index) => {
-        setTimeout(() => {
-          const message: ChatMessage = {
-            id: `ai-${agent.id}-${Date.now()}-${index}`,
-            sender: agent.name,
-            message: generateAIMessage(agent, topic, gameState.currentRound),
-            timestamp: Date.now(),
-            isAI: true
-          };
-          setCurrentMessages(prev => [...prev, message]);
-        }, (index + 1) * 2000);
-      });
+      scheduleAIMessages();
     }, 1000);
-  }, [gameState.aiAgents, gameState.currentRound, generateAIMessage]);
+  }, [messageTimers, scheduleAIMessages]);
 
-  // Make decision with enhanced pairwise logic
+  // Make decision with enhanced logic and educational insights
   const makeDecision = useCallback((humanChoice: 'cooperate' | 'defect') => {
     const humanHistory = gameState.rounds.map(r => r.humanChoice).filter(Boolean) as ('cooperate' | 'defect')[];
     
@@ -159,15 +247,27 @@ export function useGameLogic() {
       totalHumanPayoff += pairwisePayoff.human;
     });
 
-    // Detect game theory events
+    // Detect game theory events and generate insights
     let event: string | undefined;
+    let strategicInsight: string | undefined;
     const allCooperated = Object.values(aiChoices).every(choice => choice === 'cooperate') && humanChoice === 'cooperate';
     const allDefected = Object.values(aiChoices).every(choice => choice === 'defect') && humanChoice === 'defect';
     const humanDefectedFirstTime = humanChoice === 'defect' && !humanHistory.includes('defect');
     
-    if (allCooperated) event = 'Nash Equilibrium';
-    else if (allDefected) event = 'Mutual Defection';
-    else if (humanDefectedFirstTime) event = 'Grim Trigger';
+    if (allCooperated) {
+      event = 'Nash Equilibrium';
+      strategicInsight = EDUCATIONAL_INSIGHTS['Nash Equilibrium'];
+    } else if (allDefected) {
+      event = 'Mutual Defection';
+      strategicInsight = EDUCATIONAL_INSIGHTS['Cooperation Breakdown'];
+    } else if (humanDefectedFirstTime) {
+      event = 'Grim Trigger';
+      strategicInsight = EDUCATIONAL_INSIGHTS['Grim Trigger'];
+    }
+
+    // Generate reflection prompt for educational mode
+    const reflectionPrompt = gameState.gameConfig?.educationalMode ? 
+      REFLECTION_PROMPTS[Math.floor(Math.random() * REFLECTION_PROMPTS.length)] : undefined;
 
     const newRound: GameRound = {
       round: gameState.currentRound,
@@ -178,10 +278,12 @@ export function useGameLogic() {
       cumulativePayoff: gameState.rounds.reduce((sum, r) => sum + r.humanPayoff, 0) + totalHumanPayoff,
       discussion: currentMessages,
       event,
-      individualPayoffs
+      individualPayoffs,
+      strategicInsight,
+      reflectionPrompt
     };
 
-    // Update AI trust levels based on human choice
+    // Update AI trust levels and track concepts
     const updatedAgents = gameState.aiAgents.map(agent => {
       const trustChange = humanChoice === 'cooperate' ? 
         Math.min(15, Math.max(5, 20 - agent.trustLevel * 0.1)) : 
@@ -194,13 +296,24 @@ export function useGameLogic() {
       };
     });
 
+    // Track encountered concepts
+    const newConcepts = [...(gameState.conceptsEncountered || [])];
+    if (event && !newConcepts.includes(event)) {
+      newConcepts.push(event);
+    }
+
+    // Clear message timers
+    Object.values(messageTimers).forEach(timer => clearInterval(timer));
+    setMessageTimers({});
+
     setGameState(prev => ({
       ...prev,
       phase: 'results',
       rounds: [...prev.rounds, newRound],
-      aiAgents: updatedAgents
+      aiAgents: updatedAgents,
+      conceptsEncountered: newConcepts
     }));
-  }, [gameState, currentMessages, getAIDecision, calculatePayoff]);
+  }, [gameState, currentMessages, getAIDecision, calculatePayoff, messageTimers]);
 
   // Add human message
   const addMessage = useCallback((message: string) => {
@@ -226,9 +339,12 @@ export function useGameLogic() {
 
       return () => clearInterval(timer);
     } else if (gameState.phase === 'discussion' && gameState.timeRemaining === 0) {
+      // Clear all message timers when discussion ends
+      Object.values(messageTimers).forEach(timer => clearInterval(timer));
+      setMessageTimers({});
       setGameState(prev => ({ ...prev, phase: 'decision' }));
     }
-  }, [gameState.phase, gameState.timeRemaining]);
+  }, [gameState.phase, gameState.timeRemaining, messageTimers]);
 
   // Continue to next round with stochastic ending support
   const nextRound = useCallback(() => {
@@ -238,7 +354,6 @@ export function useGameLogic() {
     
     // Check for game end
     if (isStochastic) {
-      // 5% chance to end each round after round 3
       if (gameState.currentRound >= 3 && Math.random() < 0.05) {
         setGameState(prev => ({
           ...prev,
@@ -248,7 +363,6 @@ export function useGameLogic() {
         return;
       }
     } else {
-      // Finite game mode
       if (gameState.currentRound >= maxRounds) {
         setGameState(prev => ({
           ...prev,
@@ -270,13 +384,23 @@ export function useGameLogic() {
     startDiscussion(config?.discussionTime || 60);
   }, [gameState.currentRound, gameState.gameConfig, startDiscussion]);
 
+  // Toggle graph display mode
+  const toggleGraphMode = useCallback(() => {
+    setGameState(prev => ({
+      ...prev,
+      showPerRoundPayoff: !prev.showPerRoundPayoff
+    }));
+  }, []);
+
   return {
     gameState,
     currentMessages,
+    createAIAgents,
     startDiscussion,
     makeDecision,
     addMessage,
     nextRound,
+    toggleGraphMode,
     setGameState
   };
 }

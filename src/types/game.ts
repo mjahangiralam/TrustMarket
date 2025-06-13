@@ -16,7 +16,9 @@ export interface AIAgent {
   trustLevel: number;
   avatar: string;
   color: string;
-  hasDefectedBefore?: boolean; // For Grim Trigger tracking
+  hasDefectedBefore?: boolean;
+  lastMessageTime?: number;
+  messageCount?: number;
 }
 
 export interface GameRound {
@@ -28,7 +30,9 @@ export interface GameRound {
   cumulativePayoff: number;
   event?: string;
   discussion: ChatMessage[];
-  individualPayoffs?: Record<string, { human: number; ai: number }>; // Pairwise payoffs
+  individualPayoffs?: Record<string, { human: number; ai: number }>;
+  strategicInsight?: string;
+  reflectionPrompt?: string;
 }
 
 export interface ChatMessage {
@@ -37,6 +41,7 @@ export interface ChatMessage {
   message: string;
   timestamp: number;
   isAI: boolean;
+  agentId?: string;
 }
 
 export interface GameState {
@@ -49,6 +54,8 @@ export interface GameState {
   isGameEnded: boolean;
   finalCommentary?: string;
   gameConfig?: GameConfig;
+  showPerRoundPayoff?: boolean;
+  conceptsEncountered?: string[];
 }
 
 export interface ConceptExplanation {
@@ -61,4 +68,11 @@ export interface EducationalContent {
   concept: string;
   explanation: string;
   relevantToRound?: number;
+}
+
+export interface StrategyReveal {
+  agentId: string;
+  strategy: string;
+  behavioralJustification: string;
+  keyDecisions: string[];
 }

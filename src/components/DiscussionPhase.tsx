@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { MessageCircle, Clock, Send, BookOpen } from 'lucide-react';
+import { MessageCircle, Clock, Send, BookOpen, Lightbulb } from 'lucide-react';
 import { ChatMessage, AIAgent } from '../types/game';
 
 interface DiscussionPhaseProps {
@@ -22,6 +22,7 @@ export function DiscussionPhase({
 }: DiscussionPhaseProps) {
   const [inputMessage, setInputMessage] = useState('');
   const [showConcepts, setShowConcepts] = useState(false);
+  const [showGlossary, setShowGlossary] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +42,13 @@ export function DiscussionPhase({
     return aiAgents.find(agent => agent.name === senderName);
   };
 
+  const glossaryTerms = [
+    { term: 'Nash Equilibrium', definition: 'A stable strategy where no player benefits by changing their decision unilaterally.' },
+    { term: 'Tit-for-Tat', definition: 'A strategy that mirrors the opponent\'s previous move.' },
+    { term: 'Grim Trigger', definition: 'A strategy that cooperates until the first defection, then defects permanently.' },
+    { term: 'Subgame Perfect', definition: 'A strategy that represents optimal play at every decision point.' }
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4">
       <div className="max-w-4xl mx-auto">
@@ -51,13 +59,22 @@ export function DiscussionPhase({
               <MessageCircle className="w-6 h-6 text-blue-400 mr-3" />
               <h2 className="text-2xl font-bold text-white">Discussion Phase</h2>
               {educationalMode && (
-                <button
-                  onClick={() => setShowConcepts(!showConcepts)}
-                  className="ml-4 bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-lg text-sm flex items-center"
-                >
-                  <BookOpen className="w-4 h-4 mr-1" />
-                  Concepts
-                </button>
+                <div className="ml-4 flex space-x-2">
+                  <button
+                    onClick={() => setShowConcepts(!showConcepts)}
+                    className="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1 rounded-lg text-sm flex items-center"
+                  >
+                    <BookOpen className="w-4 h-4 mr-1" />
+                    Concepts
+                  </button>
+                  <button
+                    onClick={() => setShowGlossary(!showGlossary)}
+                    className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg text-sm flex items-center"
+                  >
+                    <Lightbulb className="w-4 h-4 mr-1" />
+                    Glossary
+                  </button>
+                </div>
               )}
             </div>
             <div className="flex items-center bg-slate-800 rounded-lg px-4 py-2">
@@ -86,6 +103,29 @@ export function DiscussionPhase({
                   <strong className="text-white">Trust Building:</strong>
                   <p className="text-slate-300 mt-1">Consistent behavior builds reputation and influences future interactions.</p>
                 </div>
+                <div className="bg-slate-800/50 rounded p-3">
+                  <strong className="text-white">Strategic Foresight:</strong>
+                  <p className="text-slate-300 mt-1">Consider how current decisions affect future rounds and relationships.</p>
+                </div>
+                <div className="bg-slate-800/50 rounded p-3">
+                  <strong className="text-white">Reputation Effects:</strong>
+                  <p className="text-slate-300 mt-1">Your actions create expectations that influence others' strategies.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Inline Glossary */}
+          {educationalMode && showGlossary && (
+            <div className="mt-4 bg-indigo-600/20 border border-indigo-500/30 rounded-lg p-4">
+              <h4 className="font-semibold text-indigo-300 mb-3">📚 Game Theory Glossary</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                {glossaryTerms.map((item, index) => (
+                  <div key={index} className="bg-slate-800/50 rounded p-3">
+                    <strong className="text-white">{item.term}:</strong>
+                    <p className="text-slate-300 mt-1">{item.definition}</p>
+                  </div>
+                ))}
               </div>
             </div>
           )}
@@ -115,7 +155,7 @@ export function DiscussionPhase({
                       <span className="font-semibold text-sm">
                         {message.sender}
                       </span>
-                      {/* Hide strategy during discussion - only show in educational mode after game ends */}
+                      {/* Strategy is hidden during discussion */}
                     </div>
                     <p className="text-sm leading-relaxed">{message.message}</p>
                   </div>
@@ -125,7 +165,8 @@ export function DiscussionPhase({
             {messages.length === 0 && (
               <div className="text-center text-slate-400 py-12">
                 <MessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Waiting for discussion to begin...</p>
+                <p>Discussion will begin shortly...</p>
+                <p className="text-sm mt-2">AI agents will share their thoughts on the topic</p>
               </div>
             )}
           </div>
@@ -152,7 +193,7 @@ export function DiscussionPhase({
           </div>
         </div>
 
-        {/* AI Agents Info - Hide strategies during discussion */}
+        {/* AI Agents Info - Strategies Hidden */}
         <div className="mt-6 grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {aiAgents.map((agent) => (
             <div key={agent.id} className="bg-white/10 backdrop-blur-lg rounded-xl p-4 border border-white/20">
@@ -160,7 +201,7 @@ export function DiscussionPhase({
                 <span className="text-2xl mr-3">{agent.avatar}</span>
                 <div>
                   <h4 className="font-semibold text-white">{agent.name}</h4>
-                  <p className="text-xs text-slate-400">Hidden Strategy</p>
+                  <p className="text-xs text-slate-400">Strategy Hidden</p>
                 </div>
               </div>
               <div className="mb-2">
@@ -181,8 +222,18 @@ export function DiscussionPhase({
                   />
                 </div>
               </div>
+              <div className="text-xs text-slate-400">
+                <p>Messages: {agent.messageCount || 0}</p>
+              </div>
             </div>
           ))}
+        </div>
+
+        {/* Discussion Engagement Indicator */}
+        <div className="mt-4 bg-green-600/20 border border-green-500/30 rounded-lg p-3">
+          <p className="text-green-300 text-sm text-center">
+            💬 AI agents are actively participating - each agent sends messages every 10 seconds minimum
+          </p>
         </div>
       </div>
     </div>

@@ -1,14 +1,16 @@
 import React from 'react';
-import { Award, Brain, Users, TrendingUp, Eye, Target, Table } from 'lucide-react';
-import { GameState } from '../types/game';
+import { Award, Brain, Users, TrendingUp, Eye, Target, Table, Lightbulb } from 'lucide-react';
+import { GameState, StrategyReveal } from '../types/game';
 import { GameChart } from './GameChart';
+import { STRATEGY_BEHAVIORAL_PATTERNS } from '../data/gameData';
 
 interface GameDebriefProps {
   gameState: GameState;
   onPlayAgain: () => void;
+  onToggleGraphMode: () => void;
 }
 
-export function GameDebrief({ gameState, onPlayAgain }: GameDebriefProps) {
+export function GameDebrief({ gameState, onPlayAgain, onToggleGraphMode }: GameDebriefProps) {
   const totalScore = gameState.rounds.reduce((sum, round) => sum + round.humanPayoff, 0);
   const cooperationRate = (gameState.rounds.filter(r => r.humanChoice === 'cooperate').length / gameState.rounds.length) * 100;
   const avgRoundScore = totalScore / gameState.rounds.length;
@@ -23,27 +25,129 @@ export function GameDebrief({ gameState, onPlayAgain }: GameDebriefProps) {
 
   const performance = getPerformanceGrade();
 
-  // Generate AI Commentary
+  // Generate strategy reveals with behavioral justifications
+  const generateStrategyReveals = (): StrategyReveal[] => {
+    return gameState.aiAgents.map(agent => {
+      const patterns = STRATEGY_BEHAVIORAL_PATTERNS[agent.strategy as keyof typeof STRATEGY_BEHAVIORAL_PATTERNS];
+      const agentRounds = gameState.rounds.map(r => r.aiChoices[agent.id]);
+      const cooperations = agentRounds.filter(choice => choice === 'cooperate').length;
+      const defections = agentRounds.filter(choice => choice === 'defect').length;
+      
+      let behavioralJustification = '';
+      let keyDecisions: string[] = [];
+      
+      switch (agent.strategy) {
+        case 'Tit-for-Tat':
+          behavioralJustification = `Followed a reciprocal strategy, cooperating first then mirroring your previous moves. This strategy builds trust through predictable reciprocity.`;
+          keyDecisions = [
+            'Always cooperated in round 1',
+            'Mirrored your previous choice in subsequent rounds',
+            `Final trust level: ${agent.trustLevel}% based on your cooperation rate`
+          ];
+          break;
+        case 'Grim Trigger':
+          const firstDefection = gameState.rounds.findIndex(r => r.humanChoice === 'defect');
+          if (firstDefection !== -1) {
+            behavioralJustification = `Employed a harsh but clear strategy: cooperate until betrayed, then retaliate permanently. Triggered permanent defection after round ${firstDefection + 1}.`;
+            keyDecisions = [
+              `Cooperated for ${firstDefection + 1} rounds`,
+              `Switched to permanent defection after your first betrayal`,
+              'Never forgave or returned to cooperation'
+            ];
+          } else {
+            behavioralJustification = `Maintained cooperation throughout the game as no betrayal was detected. This strategy rewards consistent cooperation.`;
+            keyDecisions = [
+              'Cooperated in every round',
+              'Never triggered retaliation mode',
+              'Maintained high trust due to your consistent cooperation'
+            ];
+          }
+          break;
+        case 'Nash Equilibrium Mimic':
+          behavioralJustification = `Sought stable, mutually beneficial strategies by analyzing patterns and responding to maintain equilibrium.`;
+          keyDecisions = [
+            'Analyzed cooperation patterns to find stable strategies',
+            'Adjusted behavior to maintain strategic balance',
+            'Focused on long-term stability over short-term gains'
+          ];
+          break;
+        case 'Subgame Perfect Equilibrium':
+          behavioralJustification = `Applied strategic foresight, considering endgame implications and adjusting behavior based on remaining rounds.`;
+          keyDecisions = [
+            'Built reputation early in the game',
+            'Considered finite game implications in decision-making',
+            'Adjusted strategy based on proximity to game end'
+          ];
+          break;
+        case 'Stochastic Strategy':
+          behavioralJustification = `Used randomized decision-making with probability adjustments based on trust levels to avoid predictability.`;
+          keyDecisions = [
+            'Made probabilistic decisions to avoid exploitation',
+            'Adjusted cooperation probability based on trust',
+            'Maintained strategic unpredictability'
+          ];
+          break;
+        case 'Trust & Reputation-Based':
+          behavioralJustification = `Made decisions primarily based on accumulated trust and reputation, rewarding consistent cooperation and punishing betrayal.`;
+          keyDecisions = [
+            'Tracked your reputation throughout the game',
+            'Adjusted cooperation based on trust levels',
+            'Rewarded consistent behavior with increased cooperation'
+          ];
+          break;
+        case 'Evolutionary Strategy':
+          behavioralJustification = `Continuously adapted strategy based on performance feedback, learning from successful and unsuccessful interactions.`;
+          keyDecisions = [
+            'Monitored performance and adjusted accordingly',
+            'Learned from both successes and failures',
+            'Evolved strategy throughout the game'
+          ];
+          break;
+        default:
+          behavioralJustification = 'Employed a balanced approach to cooperation and competition.';
+          keyDecisions = ['Made strategic decisions based on game context'];
+      }
+      
+      return {
+        agentId: agent.id,
+        strategy: agent.strategy,
+        behavioralJustification,
+        keyDecisions
+      };
+    });
+  };
+
+  const strategyReveals = generateStrategyReveals();
+
+  // Generate comprehensive commentary
   const generateCommentary = () => {
     const comments = [];
     
     if (cooperationRate > 70) {
-      comments.push("Your high cooperation rate built strong trust with most AI agents.");
+      comments.push("Your high cooperation rate built strong trust with most AI agents, leading to more favorable outcomes.");
     } else if (cooperationRate < 30) {
-      comments.push("Your frequent defections triggered defensive strategies from AI agents.");
+      comments.push("Your frequent defections triggered defensive strategies from AI agents, reducing overall payoffs.");
     } else {
-      comments.push("You showed a balanced approach between cooperation and self-interest.");
+      comments.push("You showed a balanced approach between cooperation and self-interest, adapting to different situations.");
     }
 
     if (avgRoundScore > 3) {
-      comments.push("Your strategic decisions resulted in above-average payoffs.");
+      comments.push("Your strategic decisions resulted in above-average payoffs, demonstrating effective game theory application.");
     } else if (avgRoundScore < 2) {
-      comments.push("Consider the long-term implications of repeated interactions.");
+      comments.push("Consider the long-term implications of repeated interactions and how reputation affects future outcomes.");
     }
 
-    // Add game mode specific commentary
+    // Add strategy-specific insights
+    const strategies = gameState.aiAgents.map(a => a.strategy);
+    if (strategies.includes('Grim Trigger')) {
+      comments.push("The presence of Grim Trigger agents made early cooperation crucial for long-term success.");
+    }
+    if (strategies.includes('Tit-for-Tat')) {
+      comments.push("Tit-for-Tat agents rewarded consistent behavior patterns with reciprocal responses.");
+    }
+
     if (gameState.gameConfig?.gameMode === 'stochastic') {
-      comments.push("The stochastic ending added uncertainty to your strategic planning.");
+      comments.push("The stochastic ending added uncertainty to your strategic planning, requiring adaptive thinking.");
     }
 
     return comments.join(' ');
@@ -60,7 +164,7 @@ export function GameDebrief({ gameState, onPlayAgain }: GameDebriefProps) {
             </div>
           </div>
           <h1 className="text-5xl font-bold text-white mb-4">Game Complete</h1>
-          <p className="text-xl text-slate-300">Final Performance Analysis</p>
+          <p className="text-xl text-slate-300">Strategic Performance Analysis & AI Strategy Reveals</p>
           {gameState.gameConfig?.gameMode === 'stochastic' && (
             <p className="text-lg text-yellow-400 mt-2">🎲 Stochastic ending after {gameState.rounds.length} rounds</p>
           )}
@@ -113,7 +217,7 @@ export function GameDebrief({ gameState, onPlayAgain }: GameDebriefProps) {
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 mb-8">
           <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
             <Table className="w-6 h-6 mr-3" />
-            Round-by-Round Game History
+            Round-by-Round Game History & Strategy Table
           </h3>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -124,6 +228,7 @@ export function GameDebrief({ gameState, onPlayAgain }: GameDebriefProps) {
                   {gameState.aiAgents.map((agent) => (
                     <th key={agent.id} className="text-left py-3 px-4 text-white font-semibold">
                       {agent.avatar} {agent.name}
+                      <div className="text-xs text-slate-400 font-normal">{agent.strategy}</div>
                     </th>
                   ))}
                   <th className="text-left py-3 px-4 text-white font-semibold">Your Score</th>
@@ -159,24 +264,29 @@ export function GameDebrief({ gameState, onPlayAgain }: GameDebriefProps) {
           </div>
         </div>
 
-        {/* Performance Chart */}
+        {/* Enhanced Performance Chart */}
         <div className="mb-8">
-          <GameChart rounds={gameState.rounds} />
+          <GameChart 
+            rounds={gameState.rounds} 
+            showPerRound={gameState.showPerRoundPayoff}
+            onToggleMode={onToggleGraphMode}
+          />
         </div>
 
-        {/* AI Final Opinions with Strategy Reveals */}
+        {/* AI Strategy Reveals with Behavioral Justifications */}
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-8 border border-white/20 mb-8">
           <h3 className="text-2xl font-bold text-white mb-6 flex items-center">
             <Brain className="w-6 h-6 mr-3" />
-            AI Agent Final Opinions & Strategy Reveals
+            AI Strategy Reveals & Behavioral Analysis
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {gameState.aiAgents.map((agent) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {strategyReveals.map((reveal) => {
+              const agent = gameState.aiAgents.find(a => a.id === reveal.agentId)!;
               const finalTrust = agent.trustLevel;
               const wouldPlayAgain = finalTrust > 50;
               
               return (
-                <div key={agent.id} className="bg-slate-800 rounded-xl p-6">
+                <div key={reveal.agentId} className="bg-slate-800 rounded-xl p-6">
                   <div className="flex items-center mb-4">
                     <span className="text-3xl mr-3">{agent.avatar}</span>
                     <div>
@@ -186,19 +296,26 @@ export function GameDebrief({ gameState, onPlayAgain }: GameDebriefProps) {
                   </div>
                   
                   {/* Strategy Reveal */}
-                  <div className="bg-purple-600/20 rounded-lg p-3 mb-4">
+                  <div className="bg-purple-600/20 rounded-lg p-4 mb-4">
                     <div className="flex items-center mb-2">
                       <Eye className="w-4 h-4 mr-2 text-purple-400" />
-                      <span className="text-purple-300 font-semibold">Hidden Strategy Revealed:</span>
+                      <span className="text-purple-300 font-semibold">Strategy Revealed:</span>
                     </div>
-                    <p className="text-white font-medium">{agent.strategy}</p>
-                    <p className="text-slate-300 text-sm mt-1">
-                      {agent.strategy === 'Tit-for-Tat' && 'Mirrored your previous moves after cooperating first.'}
-                      {agent.strategy === 'Grim Trigger' && 'Cooperated until your first betrayal, then retaliated permanently.'}
-                      {agent.strategy === 'Opportunistic' && 'Made decisions based on trust levels and potential gains.'}
-                      {agent.strategy === 'Nash Equilibrium Seeker' && 'Analyzed patterns to find mutually beneficial outcomes.'}
-                      {agent.strategy === 'Adaptive Mirroring' && 'Learned from recent patterns and adapted accordingly.'}
-                    </p>
+                    <p className="text-white font-medium mb-2">{reveal.strategy}</p>
+                    <p className="text-slate-300 text-sm">{reveal.behavioralJustification}</p>
+                  </div>
+
+                  {/* Key Decisions */}
+                  <div className="bg-indigo-600/20 rounded-lg p-4 mb-4">
+                    <h5 className="text-indigo-300 font-semibold mb-2">Key Strategic Decisions:</h5>
+                    <ul className="text-slate-300 text-sm space-y-1">
+                      {reveal.keyDecisions.map((decision, index) => (
+                        <li key={index} className="flex items-start">
+                          <span className="text-indigo-400 mr-2">•</span>
+                          {decision}
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                   
                   <div className="mb-4">
@@ -225,8 +342,8 @@ export function GameDebrief({ gameState, onPlayAgain }: GameDebriefProps) {
                   <div className={`p-3 rounded-lg ${wouldPlayAgain ? 'bg-green-600/20' : 'bg-red-600/20'}`}>
                     <p className="text-sm text-white">
                       "{wouldPlayAgain 
-                        ? "You showed strategic thinking. I'd consider playing again."
-                        : "Trust was broken too many times. I wouldn't play again."
+                        ? "Your strategic approach was respectable. I'd consider future interactions."
+                        : "Trust was compromised too often. Future cooperation seems unlikely."
                       }"
                     </p>
                   </div>
@@ -240,7 +357,7 @@ export function GameDebrief({ gameState, onPlayAgain }: GameDebriefProps) {
         <div className="bg-blue-600/20 border border-blue-500/30 rounded-xl p-6 mb-8">
           <h4 className="text-blue-300 font-semibold mb-3 flex items-center">
             <Target className="w-5 h-5 mr-2" />
-            🤖 Strategic Analysis
+            🤖 Comprehensive Strategic Analysis
           </h4>
           <p className="text-slate-300 leading-relaxed">
             {generateCommentary()}
@@ -248,21 +365,40 @@ export function GameDebrief({ gameState, onPlayAgain }: GameDebriefProps) {
         </div>
 
         {/* Game Theory Concepts Encountered */}
-        <div className="bg-purple-600/20 border border-purple-500/30 rounded-xl p-6 mb-8">
-          <h4 className="text-purple-300 font-semibold mb-3">🧠 Game Theory Concepts Encountered</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Array.from(new Set(gameState.rounds.map(r => r.event).filter(Boolean))).map((event) => (
-              <div key={event} className="bg-slate-800/50 rounded-lg p-3">
-                <span className="font-semibold text-white">{event}</span>
-                <p className="text-slate-300 text-sm mt-1">
-                  {event === 'Nash Equilibrium' && 'Stable mutual strategies achieved'}
-                  {event === 'Grim Trigger' && 'Permanent retaliation triggered'}
-                  {event === 'Mutual Defection' && 'Suboptimal outcomes for all players'}
-                </p>
-              </div>
-            ))}
+        {gameState.conceptsEncountered && gameState.conceptsEncountered.length > 0 && (
+          <div className="bg-purple-600/20 border border-purple-500/30 rounded-xl p-6 mb-8">
+            <h4 className="text-purple-300 font-semibold mb-3 flex items-center">
+              <Lightbulb className="w-5 h-5 mr-2" />
+              🧠 Game Theory Concepts Encountered
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {gameState.conceptsEncountered.map((concept) => (
+                <div key={concept} className="bg-slate-800/50 rounded-lg p-3">
+                  <span className="font-semibold text-white">{concept}</span>
+                  <p className="text-slate-300 text-sm mt-1">
+                    {concept === 'Nash Equilibrium' && 'Stable mutual strategies achieved'}
+                    {concept === 'Grim Trigger' && 'Permanent retaliation triggered'}
+                    {concept === 'Mutual Defection' && 'Suboptimal outcomes for all players'}
+                    {concept === 'Trust Building' && 'Reputation effects observed'}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
+        {/* Educational Reflection Prompts */}
+        {gameState.gameConfig?.educationalMode && (
+          <div className="bg-green-600/20 border border-green-500/30 rounded-xl p-6 mb-8">
+            <h4 className="text-green-300 font-semibold mb-3">🎓 Reflection Questions</h4>
+            <div className="space-y-3">
+              <p className="text-slate-300">• How did knowing the game would end affect your strategic decisions?</p>
+              <p className="text-slate-300">• Which AI strategies were most effective against your approach?</p>
+              <p className="text-slate-300">• How would you adjust your strategy if you played again?</p>
+              <p className="text-slate-300">• What role did reputation and trust play in the outcomes?</p>
+            </div>
+          </div>
+        )}
 
         {/* Action Buttons */}
         <div className="text-center space-y-4">
@@ -270,10 +406,10 @@ export function GameDebrief({ gameState, onPlayAgain }: GameDebriefProps) {
             onClick={onPlayAgain}
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 mr-4"
           >
-            Play Again
+            Play Again with New Strategies
           </button>
           <div className="text-slate-400 text-sm mt-4">
-            <p>"The only way to win is to keep playing." - Game Theory</p>
+            <p>"The only way to win is to keep playing and learning." - Game Theory</p>
           </div>
         </div>
       </div>
