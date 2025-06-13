@@ -295,6 +295,9 @@ export function useGameLogic() {
       totalHumanPayoff += pairwisePayoff.human;
     });
 
+    // Average the human payoff across all AI agents
+    totalHumanPayoff = totalHumanPayoff / gameState.aiAgents.length;
+
     // Detect game theory events and generate insights
     let event: string | undefined;
     let strategicInsight: string | undefined;
