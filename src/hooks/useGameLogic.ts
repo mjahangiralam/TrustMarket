@@ -168,7 +168,7 @@ export function useGameLogic() {
       // Schedule first message
       const firstMessageTimer = window.setTimeout(() => {
         console.log(`First message timer triggered for ${agent.name}`);
-        if (state.phase === 'discussion' && state.timeRemaining > 5) {
+        if (state.phase === 'discussion' ) {
           const message: ChatMessage = {
             id: `ai-${agent.id}-${Date.now()}`,
             sender: agent.name,
