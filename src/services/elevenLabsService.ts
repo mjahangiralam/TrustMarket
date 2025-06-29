@@ -89,7 +89,12 @@ class ElevenLabsService {
         { voice_id: 'AZnzlk1XvdvUeBnXmlld', name: 'Domi', category: 'premade' },
         { voice_id: 'EXAVITQu4vr4xnSDxMaL', name: 'Bella', category: 'premade' },
         { voice_id: 'ErXwobaYiN019PkySvjV', name: 'Antoni', category: 'premade' },
-        { voice_id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli', category: 'premade' }
+        { voice_id: 'MF3mGyEYCl7XYWbV9V6O', name: 'Elli', category: 'premade' },
+        { voice_id: 'VR6AewLTigWG4xSOukaG', name: 'Arnold', category: 'premade' },
+        { voice_id: 'pNInz6obpgDQGcFmaJgB', name: 'Adam', category: 'premade' },
+        { voice_id: 'yoZ06aMxZJJ28mfd3POQ', name: 'Sam', category: 'premade' },
+        { voice_id: 'piTKgcLEGmPE4e6mEKli', name: 'Dorothy', category: 'premade' },
+        { voice_id: 'ThT5KcBeYPX3keUQqHPh', name: 'Josh', category: 'premade' }
       ];
     }
   }
@@ -191,22 +196,52 @@ class ElevenLabsService {
   }
 
   async speakMessage(message: string, agentName: string): Promise<void> {
-    // Map agent names to different voices for variety
+    // Map AI agent names to specific voices for consistent character voices
     const voiceMap: Record<string, number> = {
+      // AI Agent names from the game
+      'The Analyst': 0,      // Rachel - analytical, methodical voice
+      'The Diplomat': 1,     // Domi - diplomatic, warm voice  
+      'The Guardian': 2,     // Bella - protective, caring voice
+      'The Opportunist': 3,  // Antoni - adaptive, flexible voice
+      'The Maverick': 4,     // Elli - unpredictable, unique voice
+      
+      // Fallback names (in case agent names change)
+      'Analyst': 0,
+      'Diplomat': 1,
+      'Guardian': 2,
+      'Opportunist': 3,
+      'Maverick': 4,
+      
+      // Generic fallbacks
       'Alex': 0,
       'Sam': 1,
       'Jordan': 2,
       'Casey': 3,
-      'Taylor': 4,
-      'Morgan': 0,
-      'Riley': 1,
-      'Quinn': 2,
-      'Avery': 3,
-      'Blake': 4
+      'Taylor': 4
     };
 
-    const voiceIndex = voiceMap[agentName] || 0;
+    // If we have a specific mapping, use it
+    if (voiceMap[agentName] !== undefined) {
+      const voiceIndex = voiceMap[agentName];
+      await this.speakText(message, voiceIndex);
+      return;
+    }
+
+    // Otherwise, generate a consistent voice based on the agent name
+    const hash = this.hashString(agentName);
+    const voiceIndex = hash % this.voices.length;
     await this.speakText(message, voiceIndex);
+  }
+
+  // Simple hash function to generate consistent voice indices for unknown agent names
+  private hashString(str: string): number {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
   }
 
   isReady(): boolean {
@@ -222,6 +257,45 @@ class ElevenLabsService {
 
   getServiceType(): string {
     return this.useFallback ? 'Browser TTS' : 'ElevenLabs';
+  }
+
+  // Get information about available voices
+  getVoiceInfo(): { name: string; id: string; category: string }[] {
+    if (this.useFallback) {
+      return this.fallbackVoices.map((voice, index) => ({
+        name: voice.name || `Voice ${index + 1}`,
+        id: `browser-${index}`,
+        category: 'browser'
+      }));
+    }
+    return this.voices.map(voice => ({
+      name: voice.name,
+      id: voice.voice_id,
+      category: voice.category
+    }));
+  }
+
+  // Get the voice index for a specific agent (for debugging)
+  getVoiceIndexForAgent(agentName: string): number {
+    const voiceMap: Record<string, number> = {
+      'The Analyst': 0,
+      'The Diplomat': 1,
+      'The Guardian': 2,
+      'The Opportunist': 3,
+      'The Maverick': 4,
+      'Analyst': 0,
+      'Diplomat': 1,
+      'Guardian': 2,
+      'Opportunist': 3,
+      'Maverick': 4
+    };
+
+    if (voiceMap[agentName] !== undefined) {
+      return voiceMap[agentName];
+    }
+
+    const hash = this.hashString(agentName);
+    return hash % this.voices.length;
   }
 
   // Resume audio context if suspended (required for autoplay policies)

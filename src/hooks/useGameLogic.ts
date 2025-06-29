@@ -3,6 +3,7 @@ import { GameState, GameRound, AIAgent, ChatMessage, GameConfig } from '../types
 import { 
   AI_AGENT_TEMPLATES, 
   DISCUSSION_TOPICS, 
+  getDiscussionTopics,
   PAYOFF_MATRIX, 
   GAME_THEORY_STRATEGIES,
   STRATEGY_BEHAVIORAL_PATTERNS,
@@ -249,7 +250,8 @@ export function useGameLogic() {
     console.log('Starting discussion phase...');
     console.log('Current game state:', gameState);
     
-    const topic = DISCUSSION_TOPICS[Math.floor(Math.random() * DISCUSSION_TOPICS.length)];
+    const availableTopics = getDiscussionTopics(gameState.gameConfig?.discussionTopicCategory);
+    const topic = availableTopics[Math.floor(Math.random() * availableTopics.length)];
     
     // Clear existing messages and timers
     setCurrentMessages([]);
@@ -445,7 +447,8 @@ export function useGameLogic() {
     setMessageTimers({});
 
     // Get a new discussion topic for the next round
-    const newTopic = DISCUSSION_TOPICS[Math.floor(Math.random() * DISCUSSION_TOPICS.length)];
+    const availableTopics = getDiscussionTopics(gameState.gameConfig?.discussionTopicCategory);
+    const newTopic = availableTopics[Math.floor(Math.random() * availableTopics.length)];
 
     // Continue to next round
     setGameState(prev => {

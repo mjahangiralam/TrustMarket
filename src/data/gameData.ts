@@ -65,7 +65,67 @@ export const DISCUSSION_TOPICS = [
   "Should rational actors always maximize their individual payoff?",
   "Can altruism be a winning strategy in repeated games?",
   "What is the value of reputation in anonymous interactions?",
-  "How does uncertainty affect cooperative behavior?"
+  "How does uncertainty affect cooperative behavior?",
+  
+  // New topics - Trust & Cooperation
+  "When is it better to be predictable versus unpredictable?",
+  "Does forgiveness have a place in strategic interactions?",
+  "How do you balance self-interest with collective benefit?",
+  "What makes a strategy 'fair' in repeated games?",
+  "Is there such a thing as too much cooperation?",
+  "How do you handle someone who seems to be playing a different game?",
+  "What role does communication play in building trust?",
+  "Can you be too trusting in strategic situations?",
+  
+  // New topics - Psychology & Behavior
+  "How do emotions affect rational decision-making?",
+  "What makes some people naturally more cooperative than others?",
+  "Is it better to be feared or loved in strategic games?",
+  "How do cultural differences affect cooperation patterns?",
+  "What role does personality play in strategic choices?",
+  "Can you change someone's strategy through your own behavior?",
+  "How do past experiences influence current decisions?",
+  "What makes a strategy 'intuitive' versus 'counterintuitive'?",
+  
+  // New topics - Game Theory Concepts
+  "When is it rational to be irrational?",
+  "How do you handle uncertainty about the game's rules?",
+  "What's the difference between a strategy and a tactic?",
+  "How do you know when to change your strategy?",
+  "Is there always a 'best' strategy in repeated games?",
+  "What role does timing play in strategic decisions?",
+  "How do you evaluate a strategy's success?",
+  "Can a losing strategy ever be the right choice?",
+  
+  // New topics - Real-world Applications
+  "How do these principles apply to business negotiations?",
+  "What can we learn about international relations from game theory?",
+  "How do these strategies work in social relationships?",
+  "What role does reputation play in online interactions?",
+  "How do these concepts apply to environmental cooperation?",
+  "What can game theory teach us about teamwork?",
+  "How do these strategies work in competitive sports?",
+  "What role does trust play in economic transactions?",
+  
+  // New topics - Philosophical Questions
+  "Is cooperation a natural human tendency or learned behavior?",
+  "What does it mean to be 'rational' in social situations?",
+  "Can you be both selfish and ethical?",
+  "What is the value of consistency in behavior?",
+  "How do you define 'success' in repeated interactions?",
+  "Is there such a thing as a 'winning personality'?",
+  "What role does luck play in strategic outcomes?",
+  "How do you measure the 'goodness' of a strategy?",
+  
+  // New topics - Advanced Concepts
+  "How do you handle multiple opponents with different strategies?",
+  "What happens when the game rules change mid-game?",
+  "How do you adapt when your strategy isn't working?",
+  "What role does information asymmetry play?",
+  "How do you handle someone who's trying to manipulate you?",
+  "What's the difference between cooperation and collusion?",
+  "How do you maintain cooperation in large groups?",
+  "What happens when the stakes change dramatically?"
 ];
 
 export const GAME_THEORY_CONCEPTS: ConceptExplanation[] = [
@@ -221,3 +281,80 @@ export const REFLECTION_PROMPTS = [
   "What would you do differently if you played this game again?",
   "How does uncertainty about others' strategies affect your choices?"
 ];
+
+// Categorized discussion topics for different game modes
+export const DISCUSSION_TOPIC_CATEGORIES = {
+  beginner: [
+    "What does it mean to cooperate?",
+    "Why might someone choose to defect?",
+    "How do you decide whether to trust someone?",
+    "What happens when everyone cooperates?",
+    "What happens when everyone defects?",
+    "How do you feel when someone betrays your trust?",
+    "Is it better to be nice or mean to others?",
+    "What makes a good friend in games like this?"
+  ],
+  
+  intermediate: [
+    "How do you balance short-term and long-term thinking?",
+    "What role does reputation play in repeated interactions?",
+    "How do you handle someone who keeps defecting?",
+    "When is it okay to be selfish?",
+    "How do you rebuild trust after it's broken?",
+    "What makes a strategy 'fair'?",
+    "How do you adapt your strategy based on others?",
+    "What's the difference between strategy and tactics?"
+  ],
+  
+  advanced: [
+    "How do you handle uncertainty about others' strategies?",
+    "What role does signaling play in strategic interactions?",
+    "How do you maintain cooperation in large groups?",
+    "What happens when the game rules change mid-game?",
+    "How do you handle multiple opponents with different strategies?",
+    "What role does information asymmetry play?",
+    "How do you evaluate the success of a strategy?",
+    "Can a losing strategy ever be optimal?"
+  ],
+  
+  philosophical: [
+    "Is cooperation a natural human tendency or learned behavior?",
+    "What does it mean to be 'rational' in social situations?",
+    "Can you be both selfish and ethical?",
+    "What is the value of consistency in behavior?",
+    "How do you define 'success' in repeated interactions?",
+    "What role does luck play in strategic outcomes?",
+    "How do you measure the 'goodness' of a strategy?",
+    "Is there such a thing as a 'winning personality'?"
+  ],
+  
+  realWorld: [
+    "How do these principles apply to business negotiations?",
+    "What can we learn about international relations from game theory?",
+    "How do these strategies work in social relationships?",
+    "What role does reputation play in online interactions?",
+    "How do these concepts apply to environmental cooperation?",
+    "What can game theory teach us about teamwork?",
+    "How do these strategies work in competitive sports?",
+    "What role does trust play in economic transactions?"
+  ],
+  
+  psychological: [
+    "How do emotions affect rational decision-making?",
+    "What makes some people naturally more cooperative than others?",
+    "Is it better to be feared or loved in strategic games?",
+    "How do cultural differences affect cooperation patterns?",
+    "What role does personality play in strategic choices?",
+    "Can you change someone's strategy through your own behavior?",
+    "How do past experiences influence current decisions?",
+    "What makes a strategy 'intuitive' versus 'counterintuitive'?"
+  ]
+};
+
+// Function to get topics based on category
+export const getDiscussionTopics = (category?: keyof typeof DISCUSSION_TOPIC_CATEGORIES | 'all') => {
+  if (!category || category === 'all') {
+    return DISCUSSION_TOPICS;
+  }
+  return DISCUSSION_TOPIC_CATEGORIES[category];
+};

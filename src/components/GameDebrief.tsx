@@ -466,6 +466,132 @@ export function GameDebrief({ gameState, onPlayAgain, onToggleGraphMode }: GameD
           </div>
         </div>
 
+        {/* Comprehensive Strategic Explanations */}
+        {gameState.gameConfig?.educationalMode && (
+          <div className="bg-purple-600/20 border border-purple-500/30 rounded-xl p-6 mb-8">
+            <h4 className="text-purple-300 font-semibold mb-4 flex items-center">
+              <Brain className="w-5 h-5 mr-2" />
+              🎓 Comprehensive AI Strategy Explanations
+            </h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {gameState.aiAgents.map((agent) => {
+                const agentRounds = gameState.rounds.map(r => ({
+                  round: r.round,
+                  choice: r.aiChoices[agent.id],
+                  humanChoice: r.humanChoice,
+                  trustLevel: r.round === 1 ? 70 : gameState.aiAgents.find(a => a.id === agent.id)?.trustLevel || 70
+                }));
+                
+                let strategyExplanation = '';
+                let roundByRoundAnalysis = '';
+                
+                switch (agent.strategy) {
+                  case 'Tit-for-Tat':
+                    strategyExplanation = 'This strategy starts with cooperation and then mirrors the opponent\'s previous move. It\'s forgiving but not forgetful, building trust through predictable reciprocity.';
+                    roundByRoundAnalysis = agentRounds.map((round, index) => {
+                      if (index === 0) return `Round ${round.round}: Started with cooperation (Tit-for-Tat always cooperates first)`;
+                      const prevHumanChoice = agentRounds[index - 1].humanChoice;
+                      return `Round ${round.round}: Mirrored your previous choice (${prevHumanChoice})`;
+                    }).join('\n');
+                    break;
+                    
+                  case 'Grim Trigger':
+                    strategyExplanation = 'This unforgiving strategy cooperates until the first betrayal, then permanently switches to defection. It\'s a harsh but clear deterrent against betrayal.';
+                    const firstDefection = agentRounds.findIndex(r => r.humanChoice === 'defect');
+                    roundByRoundAnalysis = agentRounds.map((round, index) => {
+                      if (firstDefection === -1) {
+                        return `Round ${round.round}: Cooperated (no betrayal detected yet)`;
+                      } else if (index < firstDefection) {
+                        return `Round ${round.round}: Cooperated (before betrayal)`;
+                      } else {
+                        return `Round ${round.round}: Defected (permanent retaliation after betrayal in round ${firstDefection + 1})`;
+                      }
+                    }).join('\n');
+                    break;
+                    
+                  case 'Nash Equilibrium Mimic':
+                    strategyExplanation = 'This strategy seeks stable, mutually beneficial outcomes by analyzing patterns and responding to maintain equilibrium. It adapts to find the most stable strategy profile.';
+                    roundByRoundAnalysis = agentRounds.map((round, index) => {
+                      const cooperateRate = agentRounds.slice(0, index + 1).filter(r => r.humanChoice === 'cooperate').length / (index + 1);
+                      if (cooperateRate > 0.7) return `Round ${round.round}: Cooperated (high cooperation rate: ${(cooperateRate * 100).toFixed(0)}%)`;
+                      if (cooperateRate < 0.3) return `Round ${round.round}: Defected (low cooperation rate: ${(cooperateRate * 100).toFixed(0)}%)`;
+                      return `Round ${round.round}: Mixed strategy (balanced cooperation rate: ${(cooperateRate * 100).toFixed(0)}%)`;
+                    }).join('\n');
+                    break;
+                    
+                  case 'Subgame Perfect Equilibrium':
+                    strategyExplanation = 'This strategy considers the finite nature of the game and adjusts behavior based on remaining rounds. It builds reputation early and may defect in final rounds.';
+                    roundByRoundAnalysis = agentRounds.map((round, index) => {
+                      const isNearEnd = index >= agentRounds.length - 2;
+                      if (index <= 2) return `Round ${round.round}: Cooperated (building reputation)`;
+                      if (isNearEnd) return `Round ${round.round}: Endgame strategy (considering finite game)`;
+                      return `Round ${round.round}: Responded to patterns (mid-game adaptation)`;
+                    }).join('\n');
+                    break;
+                    
+                  case 'Stochastic Strategy':
+                    strategyExplanation = 'This strategy uses randomized decision-making with probability adjustments based on trust levels. It avoids predictability while maintaining some pattern awareness.';
+                    roundByRoundAnalysis = agentRounds.map((round, index) => {
+                      const baseProb = 0.6;
+                      const trustAdjustment = (round.trustLevel - 50) / 100;
+                      const finalProb = Math.max(0.1, Math.min(0.9, baseProb + trustAdjustment));
+                      return `Round ${round.round}: ${round.choice} (${(finalProb * 100).toFixed(0)}% cooperation probability, trust: ${round.trustLevel}%)`;
+                    }).join('\n');
+                    break;
+                    
+                  case 'Trust & Reputation-Based':
+                    strategyExplanation = 'This strategy makes decisions primarily based on accumulated trust and reputation. It rewards consistent cooperation and punishes betrayal through trust-based probability adjustments.';
+                    roundByRoundAnalysis = agentRounds.map((round, index) => {
+                      const trustThreshold = 60;
+                      const wouldCooperate = round.trustLevel > trustThreshold;
+                      return `Round ${round.round}: ${round.choice} (trust: ${round.trustLevel}%, ${wouldCooperate ? 'above' : 'below'} threshold)`;
+                    }).join('\n');
+                    break;
+                    
+                  case 'Evolutionary Strategy':
+                    strategyExplanation = 'This strategy continuously adapts based on performance feedback, learning from successful and unsuccessful interactions to improve over time.';
+                    roundByRoundAnalysis = agentRounds.map((round, index) => {
+                      if (index === 0) return `Round ${round.round}: Initial cooperation (starting strategy)`;
+                      const recentPerformance = index >= 3 ? 'analyzing recent performance' : 'learning phase';
+                      return `Round ${round.round}: ${round.choice} (${recentPerformance})`;
+                    }).join('\n');
+                    break;
+                    
+                  default:
+                    strategyExplanation = 'This agent employed a balanced approach to cooperation and competition.';
+                    roundByRoundAnalysis = agentRounds.map(round => 
+                      `Round ${round.round}: ${round.choice} (balanced strategy)`
+                    ).join('\n');
+                }
+                
+                return (
+                  <div key={agent.id} className="bg-slate-800/50 rounded-lg p-4">
+                    <div className="flex items-center mb-3">
+                      <span className="text-2xl mr-3">{agent.avatar}</span>
+                      <div>
+                        <h5 className="font-semibold text-white">{agent.name}</h5>
+                        <p className="text-sm text-slate-400">{agent.strategy}</p>
+                      </div>
+                    </div>
+                    
+                    <div className="mb-3">
+                      <h6 className="text-purple-300 font-medium mb-1">Strategy Overview:</h6>
+                      <p className="text-slate-300 text-sm">{strategyExplanation}</p>
+                    </div>
+                    
+                    <div>
+                      <h6 className="text-indigo-300 font-medium mb-1">Round-by-Round Analysis:</h6>
+                      <div className="bg-slate-900/50 rounded p-3">
+                        <pre className="text-slate-300 text-xs whitespace-pre-line">{roundByRoundAnalysis}</pre>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {/* Strategic Analysis Commentary */}
         <div className="bg-blue-600/20 border border-blue-500/30 rounded-xl p-6 mb-8">
           <h4 className="text-blue-300 font-semibold mb-3 flex items-center">

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, Clock, Send, BookOpen, Lightbulb, Volume2, VolumeX, Square } from 'lucide-react';
+import { MessageCircle, Clock, Send, BookOpen, Lightbulb, Volume2, VolumeX, SkipForward } from 'lucide-react';
 import { ChatMessage, AIAgent } from '../types/game';
 import { elevenLabsService } from '../services/elevenLabsService';
 
@@ -20,6 +20,7 @@ export function DiscussionPhase({
   timeRemaining, 
   aiAgents,
   onAddMessage,
+  onTimeUp,
   educationalMode = false,
   elevenLabsKey
 }: DiscussionPhaseProps) {
@@ -86,10 +87,6 @@ export function DiscussionPhase({
     setAudioEnabled(!audioEnabled);
   };
 
-  const stopAudio = () => {
-    elevenLabsService.stop();
-  };
-
   const glossaryTerms = [
     { term: 'Nash Equilibrium', definition: 'A stable strategy where no player benefits by changing their decision unilaterally.' },
     { term: 'Tit-for-Tat', definition: 'A strategy that mirrors the opponent\'s previous move.' },
@@ -147,12 +144,12 @@ export function DiscussionPhase({
                   </button>
                   
                   <button
-                    onClick={stopAudio}
-                    className="flex items-center px-3 py-2 rounded-lg text-sm font-medium bg-slate-600 hover:bg-slate-700 text-white transition-colors"
-                    title="Stop all audio"
+                    onClick={onTimeUp}
+                    className="flex items-center px-3 py-2 rounded-lg text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+                    title="Skip to next phase"
                   >
-                    <Square className="w-4 h-4 mr-1" />
-                    Stop
+                    <SkipForward className="w-4 h-4 mr-1" />
+                    Skip
                   </button>
                 </div>
               )}
@@ -196,6 +193,20 @@ export function DiscussionPhase({
                 <p className="text-xs text-yellow-300 mt-1">
                   Using browser TTS (add ElevenLabs API key for premium voices)
                 </p>
+              )}
+              {elevenLabsKey && audioInitialized && (
+                <div className="text-xs text-blue-300 mt-2">
+                  <p className="font-semibold mb-1">Voice Assignments:</p>
+                  {aiAgents.map((agent) => {
+                    const voiceIndex = elevenLabsService.getVoiceIndexForAgent(agent.name);
+                    const voiceInfo = elevenLabsService.getVoiceInfo()[voiceIndex];
+                    return (
+                      <p key={agent.id} className="text-xs">
+                        {agent.avatar} {agent.name}: {voiceInfo?.name || `Voice ${voiceIndex + 1}`}
+                      </p>
+                    );
+                  })}
+                </div>
               )}
             </div>
           )}

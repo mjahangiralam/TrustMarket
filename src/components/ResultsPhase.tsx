@@ -177,54 +177,6 @@ export function ResultsPhase({ round, aiAgents, onContinue, educationalMode = fa
           </div>
         </div>
 
-        {/* Educational Strategy Explanations */}
-        {educationalMode && (
-          <div className="bg-purple-600/20 border border-purple-500/30 rounded-xl p-6 mb-8">
-            <h4 className="text-purple-300 font-semibold mb-4 flex items-center">
-              <Brain className="w-5 h-5 mr-2" />
-              🎓 AI Strategy Explanations
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {aiAgents.map((agent) => {
-                const choice = round.aiChoices[agent.id];
-                let explanation = '';
-                
-                switch (agent.strategy) {
-                  case 'Tit-for-Tat':
-                    explanation = round.round === 1 ? 
-                      'Started with cooperation as per Tit-for-Tat strategy.' :
-                      `Mirrored your previous move (${round.round > 1 ? 'your last choice' : 'cooperated first'}).`;
-                    break;
-                  case 'Grim Trigger':
-                    explanation = choice === 'defect' ? 
-                      'Triggered permanent retaliation due to previous betrayal.' :
-                      'Cooperating until first betrayal occurs.';
-                    break;
-                  case 'Opportunistic':
-                    explanation = `Made decision based on trust level (${agent.trustLevel}%) and potential gains.`;
-                    break;
-                  case 'Nash Equilibrium Seeker':
-                    explanation = 'Analyzed patterns to find mutually beneficial strategy.';
-                    break;
-                  case 'Adaptive Mirroring':
-                    explanation = 'Adapted based on recent behavioral patterns.';
-                    break;
-                }
-                
-                return (
-                  <div key={agent.id} className="bg-slate-800/50 rounded-lg p-4">
-                    <div className="flex items-center mb-2">
-                      <span className="text-xl mr-2">{agent.avatar}</span>
-                      <span className="font-semibold text-white">{agent.name}</span>
-                    </div>
-                    <p className="text-sm text-slate-300">{explanation}</p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
         {/* Game Theory Insight */}
         {round.event && (
           <div className="bg-purple-600/20 border border-purple-500/30 rounded-xl p-6 mb-8">

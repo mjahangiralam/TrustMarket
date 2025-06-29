@@ -1,5 +1,5 @@
 import React from 'react';
-import { Users, Clock, Brain, Settings, Infinity } from 'lucide-react';
+import { Users, Clock, Brain, Settings, Infinity, MessageCircle } from 'lucide-react';
 import { GameConfig } from '../types/game';
 import { ApiKeySetup } from './ApiKeySetup';
 
@@ -14,6 +14,7 @@ export function GameSetup({ onStartGame }: GameSetupProps) {
     aiAgentCount: 3,
     educationalMode: true,
     gameMode: 'finite',
+    discussionTopicCategory: 'all',
     elevenLabsKey: '',
     aiPersonalityKey: ''
   });
@@ -119,6 +120,29 @@ export function GameSetup({ onStartGame }: GameSetupProps) {
                     </select>
                   </div>
                 )}
+
+                <div>
+                  <label className="flex items-center text-white font-medium mb-3">
+                    <MessageCircle className="w-5 h-5 mr-2" />
+                    Discussion Topics
+                  </label>
+                  <select
+                    value={config.discussionTopicCategory}
+                    onChange={(e) => setConfig(prev => ({ ...prev, discussionTopicCategory: e.target.value as any }))}
+                    className="w-full bg-slate-800 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="all">All Topics (Mixed Variety)</option>
+                    <option value="beginner">Beginner (Basic Concepts)</option>
+                    <option value="intermediate">Intermediate (Strategic Thinking)</option>
+                    <option value="advanced">Advanced (Complex Scenarios)</option>
+                    <option value="philosophical">Philosophical (Deep Questions)</option>
+                    <option value="realWorld">Real-World Applications</option>
+                    <option value="psychological">Psychological (Human Behavior)</option>
+                  </select>
+                  <p className="text-xs text-slate-400 mt-1">
+                    Choose the type of discussion topics you'll encounter during the game
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-4">

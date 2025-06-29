@@ -6,7 +6,7 @@ import { ResultsPhase } from './components/ResultsPhase';
 import { GameDebrief } from './components/GameDebrief';
 import { useGameLogic } from './hooks/useGameLogic';
 import { GameConfig, GameState } from './types/game';
-import { DISCUSSION_TOPICS } from './data/gameData';
+import { getDiscussionTopics } from './data/gameData';
 
 function App() {
   const {
@@ -38,7 +38,7 @@ function App() {
         rounds: [],
         isGameEnded: false,
         conceptsEncountered: [],
-        discussionTopic: DISCUSSION_TOPICS[Math.floor(Math.random() * DISCUSSION_TOPICS.length)],
+        discussionTopic: getDiscussionTopics(config.discussionTopicCategory)[Math.floor(Math.random() * getDiscussionTopics(config.discussionTopicCategory).length)],
         timeRemaining: config.discussionTime
       };
       
