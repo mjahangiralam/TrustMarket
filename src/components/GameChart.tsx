@@ -79,7 +79,7 @@ export function GameChart({ rounds, showPerRound = false, onToggleMode }: GameCh
           <div className="text-right">
             <p className="text-slate-300 text-sm">Current Score</p>
             <p className="text-2xl font-bold text-green-400">
-              {showPerRound ? rounds[rounds.length - 1]?.humanPayoff || 0 : rounds[rounds.length - 1]?.cumulativePayoff || 0}
+              {showPerRound ? (rounds[rounds.length - 1]?.humanPayoff || 0).toFixed(2) : (rounds[rounds.length - 1]?.cumulativePayoff || 0).toFixed(2)}
             </p>
           </div>
         </div>
@@ -146,9 +146,9 @@ export function GameChart({ rounds, showPerRound = false, onToggleMode }: GameCh
           )}
           
           {/* Y-axis labels */}
-          <text x="10" y="50" fill="#9CA3AF" fontSize="12">{maxValue}</text>
-          <text x="10" y={chartHeight/2} fill="#9CA3AF" fontSize="12">{Math.round((maxValue + minValue) / 2)}</text>
-          <text x="10" y={chartHeight - 20} fill="#9CA3AF" fontSize="12">{minValue}</text>
+          <text x="10" y="50" fill="#9CA3AF" fontSize="12">{maxValue.toFixed(2)}</text>
+          <text x="10" y={chartHeight/2} fill="#9CA3AF" fontSize="12">{((maxValue + minValue) / 2).toFixed(2)}</text>
+          <text x="10" y={chartHeight - 20} fill="#9CA3AF" fontSize="12">{minValue.toFixed(2)}</text>
           
           {/* X-axis label */}
           <text x={chartWidth/2} y={chartHeight - 5} fill="#9CA3AF" fontSize="14" textAnchor="middle">
@@ -199,9 +199,9 @@ export function GameChart({ rounds, showPerRound = false, onToggleMode }: GameCh
                 
                 {/* Tooltip on hover */}
                 <title>
-                  Round {point.round}: {point.value} points
+                  Round {point.round}: {point.value.toFixed(2)} points
                   Choice: {point.choice}
-                  {showPerRound ? `Round Gain: +${point.value}` : `Cumulative: ${point.value}`}
+                  {showPerRound ? `Round Gain: +${point.value.toFixed(2)}` : `Cumulative: ${point.value.toFixed(2)}`}
                 </title>
               </g>
             );
@@ -253,7 +253,7 @@ export function GameChart({ rounds, showPerRound = false, onToggleMode }: GameCh
         </div>
         <div className="text-center">
           <p className="text-2xl font-bold text-white">
-            {rounds.length > 0 ? Math.round((rounds[rounds.length - 1].cumulativePayoff / rounds.length) * 10) / 10 : 0}
+            {rounds.length > 0 ? (rounds[rounds.length - 1].cumulativePayoff / rounds.length).toFixed(2) : '0.00'}
           </p>
           <p className="text-sm text-slate-400">Avg/Round</p>
         </div>

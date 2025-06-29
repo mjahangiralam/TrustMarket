@@ -230,7 +230,7 @@ export function GameDebrief({ gameState, onPlayAgain, onToggleGraphMode }: GameD
             <div>
               <p className="text-2xl font-bold text-yellow-400">{winner.name}</p>
               <p className="text-lg text-slate-300">Average: {winner.avgPayoff.toFixed(2)} points/round</p>
-              <p className="text-lg text-slate-300">Total: {winner.totalPayoff} points</p>
+              <p className="text-lg text-slate-300">Total: {winner.totalPayoff.toFixed(2)} points</p>
             </div>
           </div>
           {winner.isHuman ? (
@@ -275,7 +275,7 @@ export function GameDebrief({ gameState, onPlayAgain, onToggleGraphMode }: GameD
                 <div className="text-right">
                   <p className="text-xl font-bold text-white">{player.avgPayoff.toFixed(2)}</p>
                   <p className="text-sm text-slate-400">avg/round</p>
-                  <p className="text-sm text-slate-500">({player.totalPayoff} total)</p>
+                  <p className="text-sm text-slate-500">({player.totalPayoff.toFixed(2)} total)</p>
                 </div>
               </div>
             ))}
@@ -291,9 +291,9 @@ export function GameDebrief({ gameState, onPlayAgain, onToggleGraphMode }: GameD
             </div>
             <div className="text-left">
               <p className="text-2xl font-bold text-white mb-2">{performance.desc}</p>
-              <p className="text-lg text-slate-300">Score: {performance.percentage.toFixed(1)}%</p>
-              <p className="text-lg text-slate-300">Average: {avgRoundScore.toFixed(1)} points/round</p>
-              <p className="text-lg text-slate-300">Cooperation: {cooperationRate.toFixed(1)}%</p>
+              <p className="text-lg text-slate-300">Score: {performance.percentage.toFixed(2)}%</p>
+              <p className="text-lg text-slate-300">Average: {avgRoundScore.toFixed(2)} points/round</p>
+              <p className="text-lg text-slate-300">Cooperation: {cooperationRate.toFixed(2)}%</p>
             </div>
           </div>
         </div>
@@ -302,7 +302,7 @@ export function GameDebrief({ gameState, onPlayAgain, onToggleGraphMode }: GameD
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 text-center">
             <TrendingUp className="w-8 h-8 text-green-400 mx-auto mb-3" />
-            <p className="text-3xl font-bold text-white">{totalScore}</p>
+            <p className="text-3xl font-bold text-white">{totalScore.toFixed(2)}</p>
             <p className="text-sm text-slate-400">Total Score</p>
           </div>
           <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 border border-white/20 text-center">
@@ -368,8 +368,8 @@ export function GameDebrief({ gameState, onPlayAgain, onToggleGraphMode }: GameD
                         </span>
                       </td>
                     ))}
-                    <td className="py-3 px-4 text-white font-bold">+{round.humanPayoff}</td>
-                    <td className="py-3 px-4 text-green-400 font-bold">{round.cumulativePayoff}</td>
+                    <td className="py-3 px-4 text-white font-bold">+{round.humanPayoff.toFixed(2)}</td>
+                    <td className="py-3 px-4 text-green-400 font-bold">{round.cumulativePayoff.toFixed(2)}</td>
                   </tr>
                 ))}
               </tbody>

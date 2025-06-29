@@ -327,8 +327,8 @@ export function useGameLogic() {
       humanChoice,
       aiChoices,
       payoffs,
-      humanPayoff: totalHumanPayoff,
-      cumulativePayoff: gameState.rounds.reduce((sum, r) => sum + r.humanPayoff, 0) + totalHumanPayoff,
+      humanPayoff: parseFloat(totalHumanPayoff.toFixed(2)),
+      cumulativePayoff: parseFloat((gameState.rounds.reduce((sum, r) => sum + r.humanPayoff, 0) + totalHumanPayoff).toFixed(2)),
       discussion: currentMessages,
       event,
       individualPayoffs,
@@ -344,7 +344,7 @@ export function useGameLogic() {
       
       return {
         ...agent,
-        trustLevel: Math.max(0, Math.min(100, agent.trustLevel + trustChange)),
+        trustLevel: parseFloat(Math.max(0, Math.min(100, agent.trustLevel + trustChange)).toFixed(2)),
         hasDefectedBefore: agent.hasDefectedBefore || humanChoice === 'defect'
       };
     });

@@ -51,14 +51,14 @@ export function ResultsPhase({ round, aiAgents, onContinue, educationalMode = fa
               <div className="bg-slate-800 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-300">Round Payoff:</span>
-                  <span className="text-2xl font-bold text-white">+{round.humanPayoff}</span>
+                  <span className="text-2xl font-bold text-white">+{round.humanPayoff.toFixed(2)}</span>
                 </div>
               </div>
               <div className="bg-slate-800 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <span className="text-slate-300">Cumulative Score:</span>
                   <span className="text-2xl font-bold text-green-400">
-                    {round.cumulativePayoff}
+                    {round.cumulativePayoff.toFixed(2)}
                     <TrendingUp className="w-5 h-5 inline ml-2" />
                   </span>
                 </div>
@@ -74,7 +74,7 @@ export function ResultsPhase({ round, aiAgents, onContinue, educationalMode = fa
                       return (
                         <div key={agentId} className="flex justify-between text-sm">
                           <span className="text-slate-300">vs {agent?.name}:</span>
-                          <span className="text-white">+{payoff.human}</span>
+                          <span className="text-white">+{payoff.human.toFixed(2)}</span>
                         </div>
                       );
                     })}
@@ -105,7 +105,7 @@ export function ResultsPhase({ round, aiAgents, onContinue, educationalMode = fa
                       </div>
                       <div className="text-right">
                         <p className="text-slate-300 text-sm">Earned</p>
-                        <p className="text-xl font-bold text-white">+{payoff}</p>
+                        <p className="text-xl font-bold text-white">+{payoff.toFixed(2)}</p>
                       </div>
                     </div>
                     
@@ -147,7 +147,7 @@ export function ResultsPhase({ round, aiAgents, onContinue, educationalMode = fa
                         agent.trustLevel > 70 ? 'text-green-400' :
                         agent.trustLevel > 40 ? 'text-yellow-400' : 'text-red-400'
                       }`}>
-                        {agent.trustLevel}%
+                        {agent.trustLevel.toFixed(2)}%
                       </span>
                       {isPositive ? (
                         <TrendingUp className="w-4 h-4 text-green-400 ml-2" />
