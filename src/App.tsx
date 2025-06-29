@@ -86,6 +86,7 @@ function App() {
           onAddMessage={addMessage}
           onTimeUp={() => setGameState(prev => ({ ...prev, phase: 'decision' }))}
           educationalMode={gameState.gameConfig?.educationalMode}
+          elevenLabsKey={gameState.gameConfig?.elevenLabsKey}
         />
       );
     

@@ -236,7 +236,7 @@ export function useGameLogic() {
         [`${agent.id}_recurring`]: recurringTimer
       }));
     });
-  }, [gameState, generateAIMessage]);
+  }, [gameState, generateAIMessage, messageTimers]);
 
   // Calculate payoffs for pairwise interactions
   const calculatePayoff = useCallback((humanChoice: 'cooperate' | 'defect', aiChoice: 'cooperate' | 'defect') => {
@@ -444,18 +444,26 @@ export function useGameLogic() {
     });
     setMessageTimers({});
 
+    // Get a new discussion topic for the next round
+    const newTopic = DISCUSSION_TOPICS[Math.floor(Math.random() * DISCUSSION_TOPICS.length)];
+
     // Continue to next round
-    setGameState(prev => ({
-      ...prev,
-      currentRound: prev.currentRound + 1,
-      phase: 'discussion',
-      timeRemaining: config?.discussionTime || 60
-    }));
-    
-    // Schedule AI messages after a short delay to ensure state is updated
-    setTimeout(() => {
-      scheduleAIMessages();
-    }, 1000);
+    setGameState(prev => {
+      const updatedState = {
+        ...prev,
+        currentRound: prev.currentRound + 1,
+        phase: 'discussion' as const,
+        discussionTopic: newTopic,
+        timeRemaining: config?.discussionTime || 60
+      };
+      
+      // Schedule AI messages with the updated state
+      setTimeout(() => {
+        scheduleAIMessages(updatedState);
+      }, 1000);
+      
+      return updatedState;
+    });
   }, [gameState.currentRound, gameState.gameConfig, messageTimers, scheduleAIMessages]);
 
   // Toggle graph display mode

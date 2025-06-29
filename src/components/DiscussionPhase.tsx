@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { MessageCircle, Clock, Send, BookOpen, Lightbulb } from 'lucide-react';
+import { MessageCircle, Clock, Send, BookOpen, Lightbulb, Volume2, VolumeX, Square } from 'lucide-react';
 import { ChatMessage, AIAgent } from '../types/game';
+import { elevenLabsService } from '../services/elevenLabsService';
 
 interface DiscussionPhaseProps {
   topic: string;
@@ -10,6 +11,7 @@ interface DiscussionPhaseProps {
   onAddMessage: (message: string) => void;
   onTimeUp: () => void;
   educationalMode?: boolean;
+  elevenLabsKey?: string;
 }
 
 export function DiscussionPhase({ 
@@ -18,11 +20,44 @@ export function DiscussionPhase({
   timeRemaining, 
   aiAgents,
   onAddMessage,
-  educationalMode = false
+  educationalMode = false,
+  elevenLabsKey
 }: DiscussionPhaseProps) {
   const [inputMessage, setInputMessage] = useState('');
   const [showConcepts, setShowConcepts] = useState(false);
   const [showGlossary, setShowGlossary] = useState(false);
+  const [audioEnabled, setAudioEnabled] = useState(true);
+  const [audioInitialized, setAudioInitialized] = useState(false);
+
+  // Initialize ElevenLabs service when component mounts
+  useEffect(() => {
+    if (elevenLabsKey && !audioInitialized) {
+      elevenLabsService.initialize(elevenLabsKey).then((success) => {
+        setAudioInitialized(success);
+        if (success) {
+          elevenLabsService.resumeAudioContext();
+        }
+      });
+    } else if (!elevenLabsKey && !audioInitialized) {
+      // Try to initialize with fallback even without API key
+      elevenLabsService.initialize('').then((success) => {
+        setAudioInitialized(success);
+      });
+    }
+  }, [elevenLabsKey, audioInitialized]);
+
+  // Handle new AI messages with audio
+  useEffect(() => {
+    if (messages.length > 0 && audioEnabled && audioInitialized) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.isAI && elevenLabsService.isReady()) {
+        // Add a small delay to ensure the message is rendered first
+        setTimeout(() => {
+          elevenLabsService.speakMessage(lastMessage.message, lastMessage.sender);
+        }, 500);
+      }
+    }
+  }, [messages, audioEnabled, audioInitialized]);
 
   // Debug effect to log messages
   useEffect(() => {
@@ -45,6 +80,14 @@ export function DiscussionPhase({
 
   const getAgentInfo = (senderName: string) => {
     return aiAgents.find(agent => agent.name === senderName);
+  };
+
+  const toggleAudio = () => {
+    setAudioEnabled(!audioEnabled);
+  };
+
+  const stopAudio = () => {
+    elevenLabsService.stop();
   };
 
   const glossaryTerms = [
@@ -82,11 +125,45 @@ export function DiscussionPhase({
                 </div>
               )}
             </div>
-            <div className="flex items-center bg-slate-800 rounded-lg px-4 py-2">
-              <Clock className="w-5 h-5 text-yellow-400 mr-2" />
-              <span className={`font-mono text-lg font-bold ${timeRemaining <= 10 ? 'text-red-400' : 'text-white'}`}>
-                {formatTime(timeRemaining)}
-              </span>
+            <div className="flex items-center space-x-3">
+              {/* Audio Controls */}
+              {(elevenLabsKey || audioInitialized) && (
+                <div className="flex items-center space-x-2">
+                  <button
+                    onClick={toggleAudio}
+                    className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      audioEnabled 
+                        ? 'bg-green-600 hover:bg-green-700 text-white' 
+                        : 'bg-red-600 hover:bg-red-700 text-white'
+                    }`}
+                    title={audioEnabled ? 'Disable audio' : 'Enable audio'}
+                  >
+                    {audioEnabled ? (
+                      <Volume2 className="w-4 h-4 mr-1" />
+                    ) : (
+                      <VolumeX className="w-4 h-4 mr-1" />
+                    )}
+                    {audioEnabled ? 'Audio On' : 'Audio Off'}
+                  </button>
+                  
+                  <button
+                    onClick={stopAudio}
+                    className="flex items-center px-3 py-2 rounded-lg text-sm font-medium bg-slate-600 hover:bg-slate-700 text-white transition-colors"
+                    title="Stop all audio"
+                  >
+                    <Square className="w-4 h-4 mr-1" />
+                    Stop
+                  </button>
+                </div>
+              )}
+              
+              {/* Timer */}
+              <div className="flex items-center bg-slate-800 rounded-lg px-4 py-2">
+                <Clock className="w-5 h-5 text-yellow-400 mr-2" />
+                <span className={`font-mono text-lg font-bold ${timeRemaining <= 10 ? 'text-red-400' : 'text-white'}`}>
+                  {formatTime(timeRemaining)}
+                </span>
+              </div>
             </div>
           </div>
           
@@ -94,6 +171,34 @@ export function DiscussionPhase({
             <h3 className="font-semibold text-blue-300 mb-2">Discussion Topic:</h3>
             <p className="text-white text-lg">{topic}</p>
           </div>
+
+          {/* Audio Status */}
+          {(elevenLabsKey || audioInitialized) && (
+            <div className={`mt-4 rounded-lg p-3 ${
+              audioInitialized 
+                ? 'bg-green-600/20 border border-green-500/30' 
+                : 'bg-yellow-600/20 border border-yellow-500/30'
+            }`}>
+              <div className="flex items-center">
+                {audioInitialized ? (
+                  <Volume2 className="w-4 h-4 text-green-400 mr-2" />
+                ) : (
+                  <VolumeX className="w-4 h-4 text-yellow-400 mr-2" />
+                )}
+                <span className={`text-sm ${audioInitialized ? 'text-green-300' : 'text-yellow-300'}`}>
+                  {audioInitialized 
+                    ? `${elevenLabsService.getServiceType()} Ready (${elevenLabsService.getVoiceCount()} voices available)`
+                    : 'Initializing TTS service...'
+                  }
+                </span>
+              </div>
+              {!elevenLabsKey && audioInitialized && (
+                <p className="text-xs text-yellow-300 mt-1">
+                  Using browser TTS (add ElevenLabs API key for premium voices)
+                </p>
+              )}
+            </div>
+          )}
 
           {/* Educational Concepts Panel */}
           {educationalMode && showConcepts && (
