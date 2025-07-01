@@ -150,16 +150,16 @@ export function ResultsPhase({ round, aiAgents, onContinue, educationalMode = fa
                   <div className="text-xs text-slate-400 mb-2">
                     Change: {trustChange}
                   </div>
-                  <div className="w-full bg-slate-700 rounded-full h-2">
+                  <div className="w-full bg-slate-700 rounded-full h-2" title="Trust reflects how much the AI agent trusts you. It increases when you cooperate and decreases when you defect.">
                     <div
-                      className={`h-2 rounded-full transition-all duration-500 ${
+                      className={`h-2 rounded-full transition-all duration-700 ease-in-out ${
                         agent.trustLevel > 70
                           ? 'bg-green-500'
                           : agent.trustLevel > 40
                           ? 'bg-yellow-500'
                           : 'bg-red-500'
                       }`}
-                      style={{ width: `${agent.trustLevel}%` }}
+                      style={{ width: `${agent.trustLevel}%`, transition: 'width 0.7s cubic-bezier(0.4,0,0.2,1)' }}
                     />
                   </div>
                 </div>

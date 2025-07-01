@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Award, Brain, Users, TrendingUp, Eye, Target, Table, Lightbulb, Trophy, Crown } from 'lucide-react';
 import { GameState, StrategyReveal } from '../types/game';
 import { GameChart } from './GameChart';
 import { STRATEGY_BEHAVIORAL_PATTERNS } from '../data/gameData';
+import confetti from 'canvas-confetti';
+import { useNavigate } from 'react-router-dom';
 
 interface GameDebriefProps {
   gameState: GameState;
@@ -39,10 +41,10 @@ export function GameDebrief({ gameState, onPlayAgain, onToggleGraphMode }: GameD
   // CALCULATE INDIVIDUAL PLAYER RANKINGS
   const calculatePlayerRankings = (): PlayerRanking[] => {
     const players: PlayerRanking[] = [];
-    
+    const humanName = gameState.gameConfig?.playerName?.trim() || 'You (Human)';
     // Add human player
     players.push({
-      name: 'You (Human)',
+      name: humanName,
       avatar: '👤',
       avgPayoff: avgRoundScore,
       isHuman: true,
@@ -201,8 +203,31 @@ export function GameDebrief({ gameState, onPlayAgain, onToggleGraphMode }: GameD
     return comments.join(' ');
   };
 
+  const confettiRef = useRef<HTMLCanvasElement>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (winner.isHuman && confettiRef.current) {
+      const myConfetti = confetti.create(confettiRef.current, { resize: true, useWorker: true });
+      myConfetti({
+        particleCount: 150,
+        spread: 90,
+        origin: { y: 0.6 },
+        zIndex: 1000,
+      });
+      // Optionally, fire more bursts
+      setTimeout(() => {
+        myConfetti({ particleCount: 80, spread: 70, origin: { x: 0.2, y: 0.7 } });
+        myConfetti({ particleCount: 80, spread: 70, origin: { x: 0.8, y: 0.7 } });
+      }, 400);
+    }
+  }, [winner.isHuman]);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4 relative">
+      {winner.isHuman && (
+        <canvas ref={confettiRef} className="fixed inset-0 pointer-events-none z-50" style={{ width: '100vw', height: '100vh' }} />
+      )}
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
@@ -646,6 +671,12 @@ export function GameDebrief({ gameState, onPlayAgain, onToggleGraphMode }: GameD
             className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-bold py-4 px-8 rounded-xl transition-all duration-200 transform hover:scale-105 mr-4"
           >
             Play Again with New Strategies
+          </button>
+          <button
+            onClick={() => navigate('/')}
+            className="bg-gradient-to-r from-slate-600 to-slate-800 hover:from-slate-700 hover:to-slate-900 text-white font-bold py-4 px-8 rounded-xl transition-all duration-200 transform hover:scale-105"
+          >
+            Back to Home
           </button>
           <div className="text-slate-400 text-sm mt-4">
             <p>"The only way to win is to keep playing and learning." - Game Theory</p>

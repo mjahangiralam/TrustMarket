@@ -19,6 +19,8 @@ export function GameSetup({ onStartGame }: GameSetupProps) {
     aiPersonalityKey: ''
   });
 
+  const [playerName, setPlayerName] = React.useState('');
+
   const handleApiKeysSubmit = (keys: { elevenLabsKey: string; aiPersonalityKey: string }) => {
     setConfig(prev => ({
       ...prev,
@@ -29,7 +31,7 @@ export function GameSetup({ onStartGame }: GameSetupProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onStartGame(config);
+    onStartGame({ ...config, playerName: playerName.trim() || 'You' });
   };
 
   return (
@@ -142,6 +144,21 @@ export function GameSetup({ onStartGame }: GameSetupProps) {
                   <p className="text-xs text-slate-400 mt-1">
                     Choose the type of discussion topics you'll encounter during the game
                   </p>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label className="flex items-center text-white font-medium mb-3">
+                    <Users className="w-5 h-5 mr-2" />
+                    Your Name
+                  </label>
+                  <input
+                    type="text"
+                    value={playerName}
+                    onChange={e => setPlayerName(e.target.value)}
+                    placeholder="Enter your name (optional)"
+                    className="w-full bg-slate-800 text-white rounded-lg px-4 py-3 border border-slate-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 mb-2"
+                  />
+                  <p className="text-xs text-slate-400 mt-1">Personalize your experience by adding your name</p>
                 </div>
               </div>
 

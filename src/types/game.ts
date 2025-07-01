@@ -7,6 +7,7 @@ export interface GameConfig {
   educationalMode: boolean;
   gameMode: 'finite' | 'stochastic';
   discussionTopicCategory?: 'all' | 'beginner' | 'intermediate' | 'advanced' | 'philosophical' | 'realWorld' | 'psychological';
+  playerName?: string;
 }
 
 export interface AIAgent {

@@ -94,6 +94,10 @@ export function DiscussionPhase({
     { term: 'Subgame Perfect', definition: 'A strategy that represents optimal play at every decision point.' }
   ];
 
+  // Get human player name and avatar
+  const humanName = 'You';
+  const humanAvatar = '👤';
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-4">
       <div className="max-w-4xl mx-auto">
@@ -256,26 +260,28 @@ export function DiscussionPhase({
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl border border-white/20 overflow-hidden">
           <div className="h-96 overflow-y-auto p-6 space-y-4">
             {messages.length > 0 ? (
-              messages.map((message) => {
+              messages.map((message, idx) => {
                 const agent = getAgentInfo(message.sender);
+                const isHuman = !message.isAI;
                 return (
                   <div
                     key={message.id}
-                    className={`flex ${message.isAI ? 'justify-start' : 'justify-end'}`}
+                    className={`flex ${message.isAI ? 'justify-start' : 'justify-end'} animate-fade-in-slide`}
+                    style={{ animationDelay: `${idx * 60}ms` }}
                   >
                     <div
-                      className={`max-w-sm rounded-2xl p-4 ${
+                      className={`max-w-sm rounded-2xl p-4 shadow-lg relative transition-all duration-300 ${
                         message.isAI
                           ? 'bg-slate-700 text-white'
                           : 'bg-blue-600 text-white'
                       }`}
                     >
                       <div className="flex items-center mb-2">
-                        {agent && (
-                          <span className="text-2xl mr-2">{agent.avatar}</span>
-                        )}
+                        <span className="text-2xl mr-2">
+                          {message.isAI ? agent?.avatar : humanAvatar}
+                        </span>
                         <span className="font-semibold text-sm">
-                          {message.sender}
+                          {message.isAI ? message.sender : humanName}
                         </span>
                       </div>
                       <p className="text-sm leading-relaxed">{message.message}</p>
