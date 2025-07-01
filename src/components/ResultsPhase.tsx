@@ -108,15 +108,6 @@ export function ResultsPhase({ round, aiAgents, onContinue, educationalMode = fa
                         <p className="text-xl font-bold text-white">+{payoff.toFixed(2)}</p>
                       </div>
                     </div>
-                    
-                    {/* Strategy Reveal */}
-                    <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t border-slate-600">
-                      <div className="flex items-center">
-                        <Eye className="w-4 h-4 mr-1 text-slate-400" />
-                        <span className="text-slate-400">Strategy:</span>
-                      </div>
-                      <span className="text-slate-300 font-medium">{agent.strategy}</span>
-                    </div>
                   </div>
                 );
               })}
