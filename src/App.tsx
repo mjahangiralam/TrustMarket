@@ -8,6 +8,14 @@ import { useGameLogic } from './hooks/useGameLogic';
 import { GameConfig, GameState } from './types/game';
 import { getDiscussionTopics } from './data/gameData';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom';
+import AboutPage from './components/AboutPage';
+import HowToPlayPage from './components/HowToPlayPage';
+import FAQPage from './components/FAQPage';
+import ContactPage from './components/ContactPage';
+import TermsPage from './components/TermsPage';
+import PrivacyPage from './components/PrivacyPage';
+import AccessibilityPage from './components/AccessibilityPage';
+import SitemapPage from './components/SitemapPage';
 
 function LandingPage() {
   useEffect(() => {
@@ -45,12 +53,20 @@ export default function App() {
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/game" element={<MainGameApp />} />
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/how-to-play" element={<HowToPlayPage />} />
+        <Route path="/faq" element={<FAQPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/terms" element={<TermsPage />} />
+        <Route path="/privacy" element={<PrivacyPage />} />
+        <Route path="/accessibility" element={<AccessibilityPage />} />
+        <Route path="/sitemap" element={<SitemapPage />} />
       </Routes>
     </Router>
   );
 }
 
-function Footer() {
+export function Footer() {
   return (
     <footer className="bg-slate-900 text-slate-200 pt-12 pb-6 px-6 mt-16">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 border-b border-slate-700 pb-8">
@@ -73,19 +89,19 @@ function Footer() {
         <div>
           <h3 className="font-bold text-white mb-4">Quick Links</h3>
           <ul className="space-y-2 text-slate-300 text-sm">
-            <li><a href="#" className="hover:text-blue-400">About</a></li>
-            <li><a href="#" className="hover:text-blue-400">How to Play</a></li>
-            <li><a href="#" className="hover:text-blue-400">FAQ</a></li>
-            <li><a href="#" className="hover:text-blue-400">Contact</a></li>
+            <li><Link to="/about" className="hover:text-blue-400">About</Link></li>
+            <li><Link to="/how-to-play" className="hover:text-blue-400">How to Play</Link></li>
+            <li><Link to="/faq" className="hover:text-blue-400">FAQ</Link></li>
+            <li><Link to="/contact" className="hover:text-blue-400">Contact</Link></li>
           </ul>
         </div>
         <div>
           <h3 className="font-bold text-white mb-4">Legal</h3>
           <ul className="space-y-2 text-slate-300 text-sm">
-            <li><a href="#" className="hover:text-blue-400">Terms of Service</a></li>
-            <li><a href="#" className="hover:text-blue-400">Privacy Policy</a></li>
-            <li><a href="#" className="hover:text-blue-400">Accessibility</a></li>
-            <li><a href="#" className="hover:text-blue-400">Sitemap</a></li>
+            <li><Link to="/terms" className="hover:text-blue-400">Terms of Service</Link></li>
+            <li><Link to="/privacy" className="hover:text-blue-400">Privacy Policy</Link></li>
+            <li><Link to="/accessibility" className="hover:text-blue-400">Accessibility</Link></li>
+            <li><Link to="/sitemap" className="hover:text-blue-400">Sitemap</Link></li>
           </ul>
         </div>
       </div>
